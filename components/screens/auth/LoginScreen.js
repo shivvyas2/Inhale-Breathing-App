@@ -68,9 +68,9 @@ export default function LoginScreen({ navigation }) {
             source={require('../../../assets/logo.png')}
             style={styles.logo}
           />
-          <Text style={styles.appName}>Calm Pulse</Text>
+          <Text style={styles.appName}>Inhale</Text>
           <Text style={styles.subtitle}>
-            Hey, Enter your details to enjoy this beautiful app
+            Inhale Peace, Exhale Stress
           </Text>
         </View>
 
@@ -116,7 +116,7 @@ export default function LoginScreen({ navigation }) {
             disabled={isLoading}
           >
             <Text style={styles.buttonText}>
-              {isLoading ? 'Logging in...' : 'Join Now'}
+              {isLoading ? 'Logging in...' : 'Inhale Now'}
             </Text>
           </TouchableOpacity>
 
@@ -135,7 +135,7 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   logoContainer: {
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: '#ffffff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 20,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   button: {
-    backgroundColor: '#D4F277',
+    backgroundColor: '#111',
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: '#000',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
