@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import Header from './Header';
 
-const Dashboard = () => {
+const Dashboard = ({ navigation }) => {
   const [quote, setQuote] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +35,10 @@ const Dashboard = () => {
         {/* Buttons Row */}
         <View style={styles.buttonContainer}>
           {/* Main Start Button */}
-          <TouchableOpacity style={styles.mainButton}>
+          <TouchableOpacity 
+            style={styles.mainButton}
+            onPress={() => navigation.navigate('ChooseSound')}
+          >
             <Image 
               source={require('../../assets/images/lotus.png')}
               style={styles.lotusIcon}
