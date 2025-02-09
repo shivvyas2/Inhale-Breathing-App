@@ -15,7 +15,7 @@ const TabNavigator = () => {
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          height: 70,
+          height: 60,
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 10,
+    paddingTop: 5,
   },
   indicator: {
     width: 4,
@@ -79,3 +79,4 @@ const styles = StyleSheet.create({
 });
 
 export default TabNavigator;
+
