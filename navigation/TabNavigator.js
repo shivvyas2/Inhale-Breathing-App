@@ -49,30 +49,7 @@ const TabNavigator = () => {
           ),
         }}
       />
-      <Tab.Screen
-        name="History"
-        component={Dashboard}
-        options={{
-          tabBarIcon: ({ focused, color }) => (
-            <View style={styles.tabItem}>
-              <Ionicons name="calendar-clear" size={24} color={color} />
-              {focused && <View style={styles.indicator} />}
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={Dashboard}
-        options={{
-          tabBarIcon: ({ focused, color }) => (
-            <View style={styles.tabItem}>
-              <Ionicons name="heart" size={24} color={color} />
-              {focused && <View style={styles.indicator} />}
-            </View>
-          ),
-        }}
-      />
+     
     </Tab.Navigator>
   );
 };
