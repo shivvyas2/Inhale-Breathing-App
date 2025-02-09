@@ -44,7 +44,7 @@ const CongratsBottomSheet = ({ navigation }) => {
 
   const handleContinue = () => {
     // Use the same navigation pattern as "Let's Start"
-    navigation.navigate('Dashboard');
+    navigation.navigate('TabNavigator');
   };
 
   return (
