@@ -1,8 +1,28 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import Header from './Header';
 
 const Dashboard = () => {
+  const [quote, setQuote] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuote();
+  }, []);
+
+  const fetchQuote = async () => {
+    try {
+      const response = await fetch('https://zenquotes.io/api/random');
+      const [data] = await response.json();
+      setQuote(data.q);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching quote:', error);
+      setQuote('Believe and you are half way there');
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
@@ -58,9 +78,11 @@ const Dashboard = () => {
         {/* Quote Container */}
         <View style={styles.quoteContainer}>
           <Text style={styles.quoteTitle}>Quote of the day</Text>
-          <Text style={styles.quoteText}>
-            Believe and you are half way there
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#8B5CF6" />
+          ) : (
+            <Text style={styles.quoteText}>{quote}</Text>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -105,11 +127,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 180, // Increased height
+    height: 180,
   },
   lotusIcon: {
-    width: 90,  // Increased size
-    height: 90, // Increased size
+    width: 90,
+    height: 90,
     tintColor: '#FFFFFF',
     marginBottom: 16,
   },
