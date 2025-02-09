@@ -28,7 +28,7 @@ const MoodScreen = ({ navigation }) => {
   const handleNext = () => {
     if (selectedMood && selectedActivity) {
       setStoreMood({ mood: selectedMood, activity: selectedActivity });
-      navigation.navigate('BreathingMethod');
+      navigation.navigate('ChooseSound');
     }
   };
 
