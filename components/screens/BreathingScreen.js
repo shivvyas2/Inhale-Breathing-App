@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
+import CongratsBottomSheet from './BottomSheet';
 
 const { width, height } = Dimensions.get('window');
 const CIRCLE_SIZE = width * 0.85;
@@ -31,6 +32,7 @@ const BreathingScreen = ({ route, navigation }) => {
   const [currentPhase, setCurrentPhase] = useState('inhale');
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdown, setCountdown] = useState(3);
+  const [showCongrats, setShowCongrats] = useState(false);
   const progressAnimation = useRef(new Animated.Value(0)).current;
 
   const createBreathingSequence = () => {
@@ -183,6 +185,11 @@ const BreathingScreen = ({ route, navigation }) => {
     if (sound) {
       sound.unloadAsync();
     }
+    setShowCongrats(true);
+  };
+
+  const handleContinue = () => {
+    setShowCongrats(false);
     navigation.goBack();
   };
 
@@ -299,6 +306,10 @@ const BreathingScreen = ({ route, navigation }) => {
           </>
         )}
       </View>
+
+      {showCongrats && (
+  <CongratsBottomSheet navigation={navigation} />
+)}
     </SafeAreaView>
   );
 };
@@ -408,4 +419,3 @@ const styles = StyleSheet.create({
 });
 
 export default BreathingScreen;
-
