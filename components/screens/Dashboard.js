@@ -1,54 +1,67 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import Header from './Header';
 
 const Dashboard = () => {
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello Shiv,</Text>
-          <Text style={styles.subGreeting}>Good Afternoon</Text>
+      <Header />
+      <View style={styles.greetingContainer}>
+        <Text style={styles.greetingName}>Hello Shiv,</Text>
+        <Text style={styles.greetingTime}>Good Afternoon</Text>
+      </View>
+
+      <View style={styles.contentContainer}>
+        {/* Buttons Row */}
+        <View style={styles.buttonContainer}>
+          {/* Main Start Button */}
+          <TouchableOpacity style={styles.mainButton}>
+            <Image 
+              source={require('../../assets/images/lotus.png')}
+              style={styles.lotusIcon}
+            />
+            <View style={styles.startButtonContent}>
+              <Image 
+                source={require('../../assets/images/play.png')}
+                style={styles.playIcon}
+              />
+              <Text style={styles.startText}>Let's Start</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Circular Buttons */}
+          <View style={styles.circularButtonsContainer}>
+            <TouchableOpacity style={styles.circleButton}>
+              <Image 
+                source={require('../../assets/images/bell.png')}
+                style={styles.circleIcon}
+              />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.circleButton}>
+              <Image 
+                source={require('../../assets/images/history.png')}
+                style={styles.circleIcon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.scoreContainer}>
-          <Ionicons name="water" size={24} color="#7C4DFF" />
-          <Text style={styles.score}>29</Text>
+
+        {/* Meditation Icon */}
+        <View style={styles.meditationContainer}>
+          <Image 
+            source={require('../../assets/images/meditation.png')}
+            style={styles.meditationIcon}
+          />
         </View>
-      </View>
 
-      {/* Main Action Button */}
-      <TouchableOpacity style={styles.startButton}>
-        <Ionicons name="flower-outline" size={50} color="white" />
-        <Text style={styles.startButtonText}>Let's Start</Text>
-      </TouchableOpacity>
-
-      {/* Additional Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.circleButton}>
-          <Ionicons name="notifications-outline" size={24} color="#7C4DFF" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.circleButton}>
-          <Ionicons name="hourglass-outline" size={24} color="#7C4DFF" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Meditation Icon */}
-      <View style={styles.meditationContainer}>
-        <Ionicons name="body-outline" size={60} color="#7C4DFF" />
-      </View>
-
-      {/* Quote Section */}
-      <View style={styles.quoteContainer}>
-        <Text style={styles.quoteTitle}>Quote of the day</Text>
-        <Text style={styles.quoteText}>Believe and you are half way there</Text>
-      </View>
-
-      {/* Bottom Navigation Placeholder */}
-      <View style={styles.bottomNav}>
-        <Ionicons name="home" size={30} color="#7C4DFF" />
-        <Ionicons name="calendar-outline" size={30} color="#7C4DFF" />
-        <Ionicons name="heart-outline" size={30} color="#7C4DFF" />
+        {/* Quote Container */}
+        <View style={styles.quoteContainer}>
+          <Text style={styles.quoteTitle}>Quote of the day</Text>
+          <Text style={styles.quoteText}>
+            Believe and you are half way there
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -57,87 +70,112 @@ const Dashboard = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: '#FFFFFF',
   },
-  header: {
+  greetingContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  greetingName: {
+    fontSize: 32,
+    fontWeight: '500',
+    color: '#1F2937',
+    lineHeight: 38,
+  },
+  greetingTime: {
+    fontSize: 32,
+    fontWeight: '500',
+    color: '#1F2937',
+    lineHeight: 38,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginTop: 32,
+    gap: 16,
   },
-  greeting: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subGreeting: {
-    fontSize: 20,
-    color: '#666',
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  score: {
-    fontSize: 20,
-    marginLeft: 5,
-    color: '#7C4DFF',
-  },
-  startButton: {
-    backgroundColor: '#7C4DFF',
-    padding: 30,
+  mainButton: {
+    backgroundColor: '#8B5CF6',
     borderRadius: 20,
+    padding: 24,
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 5,
-  },
-  actionButtons: {
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    marginBottom: 30,
+    height: 180, // Increased height
+  },
+  lotusIcon: {
+    width: 90,  // Increased size
+    height: 90, // Increased size
+    tintColor: '#FFFFFF',
+    marginBottom: 16,
+  },
+  startButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  playIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#FFFFFF',
+    marginRight: 8,
+  },
+  startText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  circularButtonsContainer: {
+    flexDirection: 'row',
+    gap: 16,
   },
   circleButton: {
-    backgroundColor: '#F0EAFA',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8B5CF6',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#FFFFFF',
   },
   meditationContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 40,
+    marginBottom: 24,
+  },
+  meditationIcon: {
+    width: 80,
+    height: 80,
+    tintColor: '#8B5CF6',
   },
   quoteContainer: {
-    backgroundColor: '#F8F9FA',
-    padding: 20,
-    borderRadius: 15,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
   },
   quoteTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    marginVertical: 10,
+    color: '#1F2937',
+    marginBottom: 12,
   },
   quoteText: {
-    fontSize: 16,
+    fontSize: 18,
+    color: '#4B5563',
     textAlign: 'center',
-    color: '#666',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    marginTop: 20,
+    lineHeight: 28,
   },
 });
 

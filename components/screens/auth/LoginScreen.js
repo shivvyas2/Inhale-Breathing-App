@@ -46,7 +46,7 @@ export default function LoginScreen({ navigation }) {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('Dashboard'); // Use replace instead of navigate
+      navigation.replace('TabNavigator');
     } catch (error) {
       alert(error.message);
     } finally {
