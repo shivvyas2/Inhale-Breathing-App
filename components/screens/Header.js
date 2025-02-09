@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
 
 const Header = ({ showBack, navigation }) => {
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setStreak(userData.streak || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching streak:', error);
+      }
+    };
+
+    fetchStreak();
+  }, []);
+
   return (
     <View style={styles.container}>
       {showBack && (
@@ -19,7 +44,7 @@ const Header = ({ showBack, navigation }) => {
           source={require('../../assets/images/fire.png')}
           style={styles.icon}
         />
-        <Text style={styles.counterText}>29</Text>
+        <Text style={styles.counterText}>{streak}</Text>
       </View>
     </View>
   );
@@ -48,9 +73,8 @@ const styles = StyleSheet.create({
     height: 24,
   },
   backButton: {
-    padding:1,
+    padding: 1,
   }
 });
 
 export default Header;
-
