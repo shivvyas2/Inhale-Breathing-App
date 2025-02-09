@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   meditationImage: {
     width: 80,
     height: 80,
-    borderRadius: 16,
+    borderRadius: 40, 
   },
   meditationInfo: {
     flex: 1,
@@ -265,11 +265,12 @@ const styles = StyleSheet.create({
     left: 0,
     width: 80,
     height: 80,
-    borderRadius: 16,
+    borderRadius: 40, // Changed from 16 to 40 (half of width/height)
     backgroundColor: 'rgba(139, 92, 246, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  
   playingOverlay: {
     backgroundColor: 'rgba(139, 92, 246, 0.85)',
   },
