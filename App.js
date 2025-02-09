@@ -10,11 +10,11 @@ import OnboardingScreen3 from './components/screens/onboarding/OnboardingScreen3
 import LoginScreen from './components/screens/auth/LoginScreen';
 import Dashboard from './components/screens/Dashboard';
 import TabNavigator from './navigation/TabNavigator';
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
+
     <SafeAreaProvider>
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -28,6 +28,7 @@ export default function App() {
         </NavigationContainer>
       </SafeAreaView>
     </SafeAreaProvider>
+
   );
 }
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import Header from './Header';
 
-const Dashboard = ({navigation}) => {
+const Dashboard = ({ navigation }) => {
+
   const [quote, setQuote] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +37,7 @@ const Dashboard = ({navigation}) => {
         <View style={styles.buttonContainer}>
           {/* Main Start Button */}
           <TouchableOpacity 
+
           style={styles.mainButton}
           onPress={() => navigation.navigate('MoodScreen')}  // Add this line
         >
@@ -44,6 +46,7 @@ const Dashboard = ({navigation}) => {
             style={styles.lotusIcon}
           />
           <View style={styles.startButtonContent}>
+
             <Image 
               source={require('../../assets/images/play.png')}
               style={styles.playIcon}
