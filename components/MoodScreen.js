@@ -34,7 +34,7 @@ const MoodScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
+    <Header showBack navigation={navigation} />
       
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>

@@ -1,45 +1,164 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  Image, 
+  ScrollView,
+  Dimensions
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
+import Header from './Header';
+
+const { width } = Dimensions.get('window');
 
 const ChooseSound = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('All');
+  const [sound, setSound] = useState();
+  const [selectedSound, setSelectedSound] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const tabs = ['All', 'Sleep', 'Reading', 'Calm', 'Focus', 'Meditation', 'Nature'];
 
   const musicData = {
     All: [
-      { id: 1, title: 'Lost', duration: '30:30', image: require('../../assets/images/lost.png') },
-      { id: 2, title: 'Discover', duration: '30:30', image: require('../../assets/images/discover.png') },
-      { id: 3, title: 'Journey', duration: '30:30', image: require('../../assets/images/journey.png') },
-      { id: 4, title: 'Joyful', duration: '30:30', image: require('../../assets/images/joyful.png') },
+      { 
+        id: 1, 
+        title: 'Lost', 
+        duration: '30:30', 
+        image: require('../../assets/images/lost.png'),
+        audio: require('../../assets/audio/lost.wav')  // Updated path
+      },
+      { 
+        id: 2, 
+        title: 'Discover', 
+        duration: '30:30', 
+        image: require('../../assets/images/discover.png'),
+        audio: require('../../assets/audio/discover.wav')  // Updated path
+      },
+      { 
+        id: 3, 
+        title: 'Journey', 
+        duration: '30:30', 
+        image: require('../../assets/images/journey.png'),
+        audio: require('../../assets/audio/journey.wav')  // Updated path
+      },
+      { 
+        id: 4, 
+        title: 'Joyful', 
+        duration: '30:30', 
+        image: require('../../assets/images/joyful.png'),
+        audio: require('../../assets/audio/joyful.wav')  // Updated path
+      },
     ],
-    Sleep: [
-      { id: 5, title: 'Dreamland', duration: '45:00', image: require('../../assets/images/lost.png') },
-      { id: 6, title: 'Night Peace', duration: '30:00', image: require('../../assets/images/discover.png') },
-      { id: 7, title: 'Lullaby', duration: '25:00', image: require('../../assets/images/journey.png') },
-      { id: 8, title: 'Sweet Dreams', duration: '35:00', image: require('../../assets/images/joyful.png') },
-    ],
-    // ... other category data remains the same
+   
+    // Add more categories...
+  };
+
+  useEffect(() => {
+    // Initialize audio
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
+
+    return () => {
+      // Cleanup
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
+
+  const playSound = async (item) => {
+    try {
+      if (sound) {
+        // Stop current sound
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      }
+
+      if (selectedSound?.id === item.id && isPlaying) {
+        setIsPlaying(false);
+        setSound(null);
+      } else {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          item.audio,
+          { shouldPlay: true, isLooping: true }
+        );
+        
+        setSound(newSound);
+        setSelectedSound(item);
+        setIsPlaying(true);
+
+        // Handle finishing
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error playing sound:', error);
+    }
+  };
+
+  const renderGridItem = (item) => (
+    <TouchableOpacity 
+      key={item.id} 
+      style={styles.gridItem}
+      onPress={() => playSound(item)}
+    >
+      <View style={[
+        styles.musicCover,
+        selectedSound?.id === item.id && styles.selectedMusicCover
+      ]}>
+        <Image source={item.image} style={styles.coverImage} />
+        <View style={styles.musicIcon}>
+          <MaterialCommunityIcons 
+            name={selectedSound?.id === item.id && isPlaying ? "pause" : "play"} 
+            size={20} 
+            color="#FFF" 
+          />
+        </View>
+        {selectedSound?.id === item.id && (
+          <View style={[
+            styles.selectedOverlay,
+            isPlaying && styles.playingOverlay
+          ]} />
+        )}
+      </View>
+      <Text style={styles.duration}>{item.duration}</Text>
+      <Text style={[
+        styles.musicTitle,
+        selectedSound?.id === item.id && styles.selectedMusicTitle
+      ]}>
+        {item.title}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const handleNext = () => {
+    if (selectedSound) {
+      if (sound) {
+        sound.unloadAsync();
+      }
+      navigation.navigate('BreathingMethod', { selectedSound });
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={30} color="#000" />
-        </TouchableOpacity>
-        <View style={styles.headerRight}>
-          <MaterialCommunityIcons name="fire" size={24} color="#8B5CF6" />
-          <Text style={styles.pointsText}>29</Text>
-        </View>
-      </View>
+      <Header showBack navigation={navigation} />
 
-      {/* Title */}
       <Text style={styles.title}>Choose soundtrack</Text>
 
-      {/* Scrollable Tabs */}
       <View style={styles.tabsContainer}>
         <ScrollView 
           horizontal
@@ -66,27 +185,18 @@ const ChooseSound = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      {/* Music Grid */}
       <ScrollView style={styles.gridContainer}>
         <View style={styles.grid}>
-          {musicData[activeTab]?.map((item) => (
-            <View key={item.id} style={styles.gridItem}>
-              <View style={styles.musicCover}>
-                <Image source={item.image} style={styles.coverImage} />
-                <View style={styles.musicIcon}>
-                  <MaterialCommunityIcons name="music" size={20} color="#FFF" />
-                </View>
-              </View>
-              <Text style={styles.duration}>{item.duration}</Text>
-              <Text style={styles.musicTitle}>{item.title}</Text>
-            </View>
-          ))}
+          {musicData[activeTab]?.map(renderGridItem)}
         </View>
       </ScrollView>
 
-      {/* Next Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.nextButton}>
+        <TouchableOpacity 
+          style={[styles.nextButton, !selectedSound && styles.disabledButton]}
+          onPress={handleNext}
+          disabled={!selectedSound}
+        >
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
@@ -98,22 +208,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pointsText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 4,
   },
   title: {
     fontSize: 28,
@@ -129,13 +223,13 @@ const styles = StyleSheet.create({
   tabsScrollContainer: {
     paddingHorizontal: 24,
     gap: 12,
-    flexDirection: 'row',
   },
   tab: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 100,
     backgroundColor: '#F3F4F6',
+    marginRight: 12,
   },
   activeTab: {
     backgroundColor: '#8B5CF6',
@@ -158,16 +252,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '48%',
+    width: (width - 72) / 2,
     marginBottom: 24,
     alignItems: 'center',
   },
   musicCover: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: (width - 72) / 2,
+    height: (width - 72) / 2,
+    borderRadius: (width - 72) / 4,
     overflow: 'hidden',
     position: 'relative',
+  },
+  selectedMusicCover: {
+    borderWidth: 2,
+    borderColor: '#8B5CF6',
   },
   coverImage: {
     width: '100%',
@@ -181,6 +279,17 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
   },
+  selectedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  playingOverlay: {
+    backgroundColor: 'rgba(139, 92, 246, 0.5)',
+  },
   duration: {
     fontSize: 14,
     color: '#6B7280',
@@ -192,6 +301,9 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginTop: 4,
   },
+  selectedMusicTitle: {
+    color: '#8B5CF6',
+  },
   buttonContainer: {
     padding: 24,
   },
@@ -201,6 +313,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  disabledButton: {
+    backgroundColor: '#D1D5DB',
+  },
   nextButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -209,3 +324,4 @@ const styles = StyleSheet.create({
 });
 
 export default ChooseSound;
+

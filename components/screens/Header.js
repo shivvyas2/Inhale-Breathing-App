@@ -1,12 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const Header = () => {
+const Header = ({ showBack, navigation }) => {
   return (
     <View style={styles.container}>
+      {showBack && (
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+      )}
+      
       <View style={styles.counterContainer}>
         <Image 
-          source={require('../../assets/images/fire.png')} // Adjust the path based on your file structure
+          source={require('../../assets/images/fire.png')}
           style={styles.icon}
         />
         <Text style={styles.counterText}>29</Text>
@@ -17,24 +27,30 @@ const Header = () => {
 
 const styles = StyleSheet.create({
   container: {
+    height: 56,
     padding: 16,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
   },
   counterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   counterText: {
     fontSize: 18,
     fontWeight: '600',
-    marginLeft: 4, // Fallback for gap
+    marginLeft: 4,
   },
   icon: {
     width: 24,
     height: 24,
+  },
+  backButton: {
+    padding:1,
   }
 });
 
 export default Header;
+
