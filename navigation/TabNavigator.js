@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Dashboard from '../components/screens/Dashboard';
 import { Ionicons } from '@expo/vector-icons';
+
+import Dashboard from '../components/screens/Dashboard';
+import Library from '../components/screens/Library';
 
 const Tab = createBottomTabNavigator();
 
@@ -36,29 +38,18 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="History"
-        component={Dashboard}
+        name="Library"
+        component={Library}
         options={{
           tabBarIcon: ({ focused, color }) => (
             <View style={styles.tabItem}>
-              <Ionicons name="calendar-clear" size={24} color={color} />
+              <Ionicons name="library" size={24} color={color} />
               {focused && <View style={styles.indicator} />}
             </View>
           ),
         }}
       />
-      <Tab.Screen
-        name="Profile"
-        component={Dashboard}
-        options={{
-          tabBarIcon: ({ focused, color }) => (
-            <View style={styles.tabItem}>
-              <Ionicons name="heart" size={24} color={color} />
-              {focused && <View style={styles.indicator} />}
-            </View>
-          ),
-        }}
-      />
+     
     </Tab.Navigator>
   );
 };
@@ -79,4 +70,3 @@ const styles = StyleSheet.create({
 });
 
 export default TabNavigator;
-
