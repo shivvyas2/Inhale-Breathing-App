@@ -2,7 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar, StyleSheet } from 'react-native';
-
+import MoodScreen from './components/MoodScreen';
 // Import screens from your components folder
 import OnboardingScreen1 from './components/screens/onboarding/OnboardingScreen1';
 import OnboardingScreen2 from './components/screens/onboarding/OnboardingScreen2';
@@ -23,6 +23,7 @@ export default function App() {
             <Stack.Screen name="Login" component={LoginScreen} />
             {/* <Stack.Screen name="SignUp" component={SignUpScreen} /> */}
             <Stack.Screen name="TabNavigator" component={TabNavigator} />
+            <Stack.Screen name="MoodScreen" component={MoodScreen} /> 
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>
