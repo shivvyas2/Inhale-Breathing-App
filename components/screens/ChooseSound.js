@@ -12,6 +12,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import Header from './Header';
+import useAuthStore from '../../stores/useAuthStore';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ const ChooseSound = ({ navigation }) => {
   const [sound, setSound] = useState();
   const [selectedSound, setSelectedSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [durations, setDurations] = useState({});
 
   const tabs = ['All', 'Sleep', 'Reading', 'Calm', 'Focus', 'Meditation', 'Nature'];
 
@@ -28,34 +30,35 @@ const ChooseSound = ({ navigation }) => {
       { 
         id: 1, 
         title: 'Lost', 
-        duration: '30:30', 
         image: require('../../assets/images/lost.png'),
-        audio: require('../../assets/audio/lost.wav')  // Updated path
+        audio: require('../../assets/audio/lost.wav')
       },
       { 
         id: 2, 
         title: 'Discover', 
-        duration: '30:30', 
         image: require('../../assets/images/discover.png'),
-        audio: require('../../assets/audio/discover.wav')  // Updated path
+        audio: require('../../assets/audio/discover.wav')
       },
       { 
         id: 3, 
         title: 'Journey', 
-        duration: '30:30', 
         image: require('../../assets/images/journey.png'),
-        audio: require('../../assets/audio/journey.wav')  // Updated path
+        audio: require('../../assets/audio/journey.wav')
       },
       { 
         id: 4, 
         title: 'Joyful', 
-        duration: '30:30', 
         image: require('../../assets/images/joyful.png'),
-        audio: require('../../assets/audio/joyful.wav')  // Updated path
+        audio: require('../../assets/audio/joyful.wav')
       },
     ],
-   
     // Add more categories...
+  };
+
+  const formatDuration = (milliseconds) => {
+    const minutes = Math.floor(milliseconds / 60000);
+    const seconds = ((milliseconds % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds.padStart(2, '0')}`;
   };
 
   useEffect(() => {
@@ -79,7 +82,6 @@ const ChooseSound = ({ navigation }) => {
   const playSound = async (item) => {
     try {
       if (sound) {
-        // Stop current sound
         await sound.stopAsync();
         await sound.unloadAsync();
       }
@@ -88,16 +90,23 @@ const ChooseSound = ({ navigation }) => {
         setIsPlaying(false);
         setSound(null);
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync(
+        const { sound: newSound, status } = await Audio.Sound.createAsync(
           item.audio,
           { shouldPlay: true, isLooping: true }
         );
+        
+        // Store the duration
+        if (status.durationMillis) {
+          setDurations(prev => ({
+            ...prev,
+            [item.id]: status.durationMillis
+          }));
+        }
         
         setSound(newSound);
         setSelectedSound(item);
         setIsPlaying(true);
 
-        // Handle finishing
         newSound.setOnPlaybackStatusUpdate((status) => {
           if (status.didJustFinish) {
             setIsPlaying(false);
@@ -134,7 +143,9 @@ const ChooseSound = ({ navigation }) => {
           ]} />
         )}
       </View>
-      <Text style={styles.duration}>{item.duration}</Text>
+      <Text style={styles.duration}>
+        {durations[item.id] ? formatDuration(durations[item.id]) : '--:--'}
+      </Text>
       <Text style={[
         styles.musicTitle,
         selectedSound?.id === item.id && styles.selectedMusicTitle
@@ -145,14 +156,30 @@ const ChooseSound = ({ navigation }) => {
   );
 
   const handleNext = () => {
-    if (selectedSound) {
-      if (sound) {
-        sound.unloadAsync();
-      }
-      navigation.navigate('BreathingMethod', { selectedSound });
+    const store = useAuthStore.getState();
+    if (!store?.mood) {
+      console.error('No mood selected');
+      return;
     }
+    
+    if (sound) {
+      sound.unloadAsync();
+    }
+  
+    // Create a simplified sound object with only necessary data
+    const simplifiedSound = selectedSound ? {
+      id: selectedSound.id,
+      title: selectedSound.title,
+      // Convert require() to string path for storage
+      audio: selectedSound.audio.toString()
+    } : null;
+    
+    navigation.navigate('BreathingScreen', {
+      selectedMood: store.mood.label,
+      breathingPattern: store.breathingPattern,
+      selectedSound: simplifiedSound
+    });
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <Header showBack navigation={navigation} />

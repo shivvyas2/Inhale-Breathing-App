@@ -14,11 +14,40 @@ const MoodScreen = ({ navigation }) => {
   const setStoreMood = useAuthStore((state) => state.setSelectedMood);
 
   const moods = [
-    { id: 1, label: 'Anxious', icon: 'pulse' },
-    { id: 2, label: 'Distracted', icon: 'trail-sign-outline' },
-    { id: 3, label: 'Sleepy', icon: 'moon' },
+    { 
+      id: 1, 
+      label: 'Anxious', 
+      icon: 'pulse',
+      pattern: {
+        inhale: 4,
+        hold1: 7,
+        exhale: 8,
+        hold2: 0
+      }
+    },
+    { 
+      id: 2, 
+      label: 'Distracted', 
+      icon: 'trail-sign-outline',
+      pattern: {
+        inhale: 4,
+        hold1: 4,
+        exhale: 4,
+        hold2: 4
+      }
+    },
+    { 
+      id: 3, 
+      label: 'Sleepy', 
+      icon: 'moon',
+      pattern: {
+        inhale: 4,
+        hold1: 0,
+        exhale: 6,
+        hold2: 2
+      }
+    },
   ];
-
   const activities = [
     { id: 1, label: 'Wind Down', icon: 'leaf' },
     { id: 2, label: 'Focus', icon: 'infinite' },
@@ -27,7 +56,12 @@ const MoodScreen = ({ navigation }) => {
 
   const handleNext = () => {
     if (selectedMood && selectedActivity) {
-      setStoreMood({ mood: selectedMood, activity: selectedActivity });
+      const selectedMoodData = moods.find(mood => mood.id === selectedMood.id);
+      setStoreMood({ 
+        mood: selectedMood, 
+        activity: selectedActivity,
+        breathingPattern: selectedMoodData.pattern
+      });
       navigation.navigate('ChooseSound');
     }
   };
