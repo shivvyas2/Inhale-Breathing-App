@@ -16,13 +16,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shivvyas.inhale"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.shivvyas.inhale"
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +33,11 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "16badf7f-488c-4ee3-8c88-38bc8f20ff66"
+      }
+    }
   }
 }
