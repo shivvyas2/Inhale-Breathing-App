@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
 import Header from './Header'; // Adjust the import path based on your file structure
 
 const SelectMood = () => {
@@ -21,7 +21,7 @@ const SelectMood = () => {
     );
 
     return (
-        <SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
             <Header />
             <Text style={styles.title}>What's your mood?</Text>
@@ -50,6 +50,9 @@ const SelectMood = () => {
 
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+    },
     container: {
         flex: 1,
         padding: 16,
