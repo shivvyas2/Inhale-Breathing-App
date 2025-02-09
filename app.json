@@ -1,12 +1,11 @@
 {
   "expo": {
-    "name": "inhale",
+    "name": "Inhale",
     "slug": "inhale",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -16,8 +15,7 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.shivvyas.inhale"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
@@ -27,13 +25,8 @@
       "package": "com.shivvyas.inhale"
     },
     "web": {
-      "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "newArchEnabled": true,
-    "plugins": [
-      "expo-secure-store"
-    ],
     "extra": {
       "eas": {
         "projectId": "16badf7f-488c-4ee3-8c88-38bc8f20ff66"
