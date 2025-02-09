@@ -192,7 +192,7 @@ const Dashboard = ({ navigation }) => {
           {/* Information Section */}
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.infoTitle}>Information</Text>
+              <Text style={styles.infoTitle}>Stats</Text>
               <TouchableOpacity>
                 <Image 
                   source={require('../../assets/images/fire.png')}
