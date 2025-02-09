@@ -57,12 +57,15 @@ const Dashboard = ({ navigation }) => {
 
           {/* Circular Buttons */}
           <View style={styles.circularButtonsContainer}>
-            <TouchableOpacity style={styles.circleButton}>
-              <Image 
-                source={require('../../assets/images/bell.png')}
-                style={styles.circleIcon}
-              />
-            </TouchableOpacity>
+          <TouchableOpacity 
+  style={styles.circleButton}
+  onPress={() => navigation.navigate('ReminderScreen')}
+>
+  <Image 
+    source={require('../../assets/images/bell.png')}
+    style={styles.circleIcon}
+  />
+</TouchableOpacity>
             
             <TouchableOpacity style={styles.circleButton}>
               <Image 

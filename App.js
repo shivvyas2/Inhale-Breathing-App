@@ -11,6 +11,8 @@ import LoginScreen from './components/screens/auth/LoginScreen';
 import Dashboard from './components/screens/Dashboard';
 import TabNavigator from './navigation/TabNavigator';
 import ChooseSound from './components/screens/ChooseSound';
+import Library from './components/screens/Library';
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -26,6 +28,11 @@ export default function App() {
             <Stack.Screen name="TabNavigator" component={TabNavigator} />
             <Stack.Screen name="MoodScreen" component={MoodScreen} />
             <Stack.Screen name="ChooseSound" component={ChooseSound} /> 
+            <Stack.Screen 
+  name="Library" 
+  component={Library}
+  options={{ headerShown: false }}
+/>
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaView>
