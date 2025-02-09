@@ -6,6 +6,8 @@ import OnboardingScreen1 from './components/screens/onboarding/OnboardingScreen1
 import OnboardingScreen2 from './components/screens/onboarding/OnboardingScreen2';
 import OnboardingScreen3 from './components/screens/onboarding/OnboardingScreen3';
 import LoginScreen from './components/screens/auth/LoginScreen';
+import Dashboard from './components/screens/Dashboard';
+
 
 const Stack = createStackNavigator();
 
@@ -34,6 +36,11 @@ export default function App() {
           name="Login" 
           component={LoginScreen} 
         />
+        <Stack.Screen 
+  name="Dashboard" 
+  component={Dashboard}
+  options={{ headerShown: false }}
+/>
       </Stack.Navigator>
     </NavigationContainer>
   );
