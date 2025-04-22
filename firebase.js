@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+// Firebase Auth removed since we're using Clerk for authentication
 
 const firebaseConfig = {
     apiKey: "AIzaSyAl1dBn-O4hhJwzhGzvCPZm-rn1ae9nNU8",
@@ -14,5 +14,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+
+// Not using Firebase Auth since we're using Clerk for authentication
+
 export const db = getFirestore(app);
+

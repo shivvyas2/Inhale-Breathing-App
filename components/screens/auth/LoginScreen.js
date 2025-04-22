@@ -7,217 +7,232 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
+  SafeAreaView,
+  ScrollView,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { useSignIn } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAl1dBn-O4hhJwzhGzvCPZm-rn1ae9nNU8",
-  authDomain: "calmpulse-bdadb.firebaseapp.com",
-  projectId: "calmpulse-bdadb",
-  storageBucket: "calmpulse-bdadb.firebasestorage.app",
-  messagingSenderId: "366564636514",
-  appId: "1:366564636514:web:b334aeb1e059ec1604de3b",
-  measurementId: "G-DNBPEY3GR1"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
+  const { signIn, setActive, isLoaded } = useSignIn();
+
+  const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      alert('Please fill in all fields');
+  const onSignInPress = async () => {
+    if (!isLoaded) {
       return;
     }
-    
+    if (!emailAddress || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('TabNavigator');
-    } catch (error) {
-      alert(error.message);
+      const signInAttempt = await signIn.create({
+        identifier: emailAddress,
+        password,
+      });
+
+      if (signInAttempt.status === 'complete') {
+        await setActive({ session: signInAttempt.createdSessionId });
+      } else {
+        console.error(JSON.stringify(signInAttempt, null, 2));
+        Alert.alert('Login Error', 'Could not complete sign in.');
+      }
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
+      Alert.alert('Login Error', err.errors ? err.errors[0].message : 'Invalid email/password or an error occurred.');
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleCreateAccount = () => {
     navigation.navigate('SignUp');
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView 
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={styles.keyboardAvoid}
       >
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../../assets/logo.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.appName}>Inhale</Text>
-          <Text style={styles.subtitle}>
-            Inhale Peace, Exhale Stress
-          </Text>
-        </View>
-
-        <BlurView intensity={100} style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#666"
-            />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Back Button */}
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={24} color="#6B7280" />
+          </TouchableOpacity>
+          
+          {/* Welcome Section */}
+          <View style={styles.headerSection}>
+            <Text style={styles.headerText}>Welcome back</Text>
+            <Text style={styles.subHeaderText}>Sign in to continue</Text>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Passcode"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#666"
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
-              <Ionicons 
-                name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                size={20} 
-                color="#666" 
+          
+          <View style={styles.formContainer}>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor="#6B7280"
               />
+            </View>
+            
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={true}
+                placeholderTextColor="#6B7280"
+              />
+              <TouchableOpacity style={styles.passwordVisibilityButton}>
+                <Ionicons name="eye-outline" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Forgot Password Link */}
+            <TouchableOpacity style={styles.forgotPasswordContainer}>
+              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
-
+          
+          {/* Sign In Button */}
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            style={styles.button}
+            onPress={onSignInPress}
             disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'Logging in...' : 'Inhale Now'}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign in</Text>
+            )}
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.createAccountButton}
-            onPress={handleCreateAccount}
-          >
-            <Text style={styles.createAccountText}>Create Account</Text>
-          </TouchableOpacity>
-        </BlurView>
+          
+          {/* Sign Up Link */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={handleCreateAccount}>
+              <Text style={styles.footerLink}>Sign up</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F6F7FB',
   },
-  logoContainer: {
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 24,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 40,
-  },
-  logo: {
-    width: 80,
-    height: 80,
     marginBottom: 20,
   },
-  appName: {
+  headerSection: {
+    marginVertical: 20,
+  },
+  headerText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1F2937',
     marginBottom: 10,
   },
-  subtitle: {
+  subHeaderText: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    color: '#6B7280',
   },
   formContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 20,
-    paddingTop: 40,
+    width: '100%',
+    marginTop: 30,
+    marginBottom: 20,
   },
   inputContainer: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 25,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    height: 50,
-  },
-  inputIcon: {
-    marginRight: 10,
   },
   input: {
     flex: 1,
-    color: '#333',
+    height: 60,
+    paddingHorizontal: 20,
     fontSize: 16,
+    color: '#1F2937',
   },
-  eyeIcon: {
-    padding: 10,
+  passwordVisibilityButton: {
+    padding: 15,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: '#8B5CF6',
+    fontSize: 14,
+    fontWeight: '500',
   },
   button: {
-    backgroundColor: '#111',
-    height: 50,
-    borderRadius: 25,
+    backgroundColor: '#8B5CF6',
+    borderRadius: 16,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
+    marginBottom: 20,
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
-  createAccountButton: {
-    marginTop: 20,
-    alignItems: 'center',
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
   },
-  createAccountText: {
-    color: '#666',
-    fontSize: 16,
+  footerText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  footerLink: {
+    color: '#8B5CF6',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
-
