@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: inhale-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: SUPABASE_URL
+        value: https://mkumjzxgocrfmpgxnpmn.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rdW1qenhnb2NyZm1wZ3hucG1uIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODE0NTgxNiwiZXhwIjoyMDczNzIxODE2fQ.Ksne84y65ZWXSd30-ZSsd8RebmdDnk--r7xX8NS9cp4
+      - key: CLERK_WEBHOOK_SECRET
+        value: your_webhook_secret_here
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production

@@ -1,0 +1,140 @@
+openapi: 3.0.0
+info:
+  title: Inhale API
+  description: Backend API for Inhale meditation app
+  version: 1.0.0
+  contact:
+    name: Inhale Team
+    email: support@inhale.app
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.inhale.app
+    description: Production server
+tags:
+  - name: Users
+    description: User management operations
+  - name: Sessions
+    description: Meditation session operations
+  - name: Music
+    description: Music library operations
+  - name: Streaks
+    description: Streak tracking operations
+  - name: Webhooks
+    description: Webhook handling operations
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is running
+      tags: [Health]
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+  /api/users:
+    get:
+      summary: Get all users
+      tags: [Users]
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  count:
+                    type: integer
+    post:
+      summary: Create a new user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Invalid input
+  /api/users/{clerkId}:
+    get:
+      summary: Get user by Clerk ID
+      tags: [Users]
+      parameters:
+        - in: path
+          name: clerkId
+          required: true
+          schema:
+            type: string
+          description: Clerk user ID
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - clerk_id
+        - username
+        - email
+      properties:
+        id:
+          type: integer
+          description: Auto-generated user ID
+        clerk_id:
+          type: string
+          description: Clerk user ID
+        username:
+          type: string
+          description: Username
+        email:
+          type: string
+          description: User email
+        level:
+          type: integer
+          description: User level
+        points:
+          type: integer
+          description: User points
+        streak:
+          type: integer
+          description: Current streak
+        total_minutes:
+          type: integer
+          description: Total meditation minutes
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
