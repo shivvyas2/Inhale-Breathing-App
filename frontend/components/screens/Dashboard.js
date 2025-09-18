@@ -1,9 +1,8 @@
 // Dashboard.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { doc, getDoc, setDoc } from 'firebase/firestore';  
-import { db } from '../../firebase';
 import { useUser } from '@clerk/clerk-expo';
+import { db, supabase } from '../../supabase';
 
 const Dashboard = ({ navigation }) => {
   const [quote, setQuote] = useState('');
@@ -22,13 +21,13 @@ const Dashboard = ({ navigation }) => {
 
   useEffect(() => {
     fetchQuote();
-    if (userLoaded) {
+    if (userLoaded && user) {
       fetchUserData();
     }
     const date = new Date();
     setCurrentDate(date.getDate().toString());
     setCurrentMonth(date.toLocaleString('default', { month: 'short', year: 'numeric' }));
-  }, [userLoaded]);
+  }, [userLoaded, user]);
 
   const fetchUserData = async () => {
     try {
@@ -41,38 +40,34 @@ const Dashboard = ({ navigation }) => {
       }
       console.log('Clerk user ID:', user.id);
 
+      // Test Supabase connection first
+      console.log('Testing Supabase connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('music')
+        .select('count')
+        .limit(1);
+      
+      if (testError) {
+        console.error('Supabase connection test failed:', testError);
+        throw testError;
+      }
+      console.log('Supabase connection test passed');
+
       // Extract username from email (everything before @gmail.com)
       const emailUsername = user.primaryEmailAddress?.emailAddress?.split('@')[0] || 'user';
 
-      // Get the user document directly from the users collection
-      const userDocRef = doc(db, 'users', user.id);
-      const userDoc = await getDoc(userDocRef);
+      // Get user profile (should exist due to webhook)
+      const userProfile = await db.getUserProfile(user.id);
+      console.log('User profile loaded:', userProfile);
 
-      if (userDoc.exists()) {
-        // User exists, use their current data
-        const data = userDoc.data();
-        console.log('Existing user data found:', data);
-        setUserData({
-          username: data.username,
-          level: data.level,
-          points: data.points,
-          streak: data.streak,
-          totalMinutes: data.totalMinutes
-        });
-      } else {
-        // User doesn't exist, create new document with 0 values
-        console.log('Creating new user with email username:', emailUsername);
-        const initialUserData = {
-          username: emailUsername,
-          level: 0,
-          points: 0,
-          streak: 0,
-          totalMinutes: 0
-        };
-        
-        await setDoc(userDocRef, initialUserData);
-        setUserData(initialUserData);
-      }
+      // Set user data
+      setUserData({
+        username: userProfile.username,
+        level: userProfile.level,
+        points: userProfile.points,
+        streak: userProfile.streak,
+        totalMinutes: userProfile.total_minutes
+      });
     } catch (error) {
       console.error('Error fetching user data:', error);
       if (error.code) {
@@ -456,3 +451,4 @@ const styles = StyleSheet.create({
 });
 
 export default Dashboard;
+

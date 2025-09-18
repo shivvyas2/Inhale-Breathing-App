@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
-import { MotiView } from 'moti';
+// Removed moti import - using regular View instead
 import CongratsBottomSheet from './BottomSheet';
 
 const { width, height } = Dimensions.get('window');
@@ -198,14 +198,12 @@ const BreathingScreen = ({ route, navigation }) => {
       <StatusBar barStyle="light-content" />
       
       {/* Animated Background */}
-      <MotiView
-        style={[StyleSheet.absoluteFill, styles.backgroundGradient]}
-        animate={{
+      <View
+        style={[StyleSheet.absoluteFill, styles.backgroundGradient, {
           backgroundColor: currentPhase === 'inhale' 
-            ? ['#4C1D95', '#2563EB'] 
-            : ['#1E40AF', '#1D4ED8']
-        }}
-        transition={{ type: 'timing', duration: 2000 }}
+            ? '#4C1D95' 
+            : '#1E40AF'
+        }]}
       />
 
       {/* Header */}
@@ -226,16 +224,11 @@ const BreathingScreen = ({ route, navigation }) => {
 
       <View style={styles.content}>
         {isCountingDown ? (
-          <MotiView
-            style={styles.countdownContainer}
-            from={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-          >
+          <View style={styles.countdownContainer}>
             <Text style={styles.countdownText}>
               {countdown === 0 ? 'Begin' : countdown}
             </Text>
-          </MotiView>
+          </View>
         ) : (
           <>
             <Text style={styles.breathingState}>{breathingState}</Text>
@@ -274,16 +267,7 @@ const BreathingScreen = ({ route, navigation }) => {
               </Svg>
               
               {/* Center Glow */}
-              <MotiView
-                from={{ scale: 1, opacity: 0.5 }}
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5],
-                }}
-                transition={{
-                  loop: true,
-                  duration: 2000,
-                }}
+              <View
                 style={[
                   styles.centerGlow,
                   {
