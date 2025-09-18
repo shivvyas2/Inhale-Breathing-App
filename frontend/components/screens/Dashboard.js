@@ -1,8 +1,9 @@
 // Dashboard.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { useUser } from '@clerk/clerk-expo';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { useUser, useClerk } from '@clerk/clerk-expo';
 import { db, supabase } from '../../supabase';
+import { Ionicons } from '@expo/vector-icons';
 
 const Dashboard = ({ navigation }) => {
   const [quote, setQuote] = useState('');
@@ -18,6 +19,7 @@ const Dashboard = ({ navigation }) => {
   });
 
   const { isLoaded: userLoaded, user } = useUser();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     fetchQuote();
@@ -39,6 +41,13 @@ const Dashboard = ({ navigation }) => {
         return;
       }
       console.log('Clerk user ID:', user.id);
+      console.log('Clerk user data:', {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.primaryEmailAddress?.emailAddress
+      });
 
       // Test Supabase connection first
       console.log('Testing Supabase connection...');
@@ -53,20 +62,102 @@ const Dashboard = ({ navigation }) => {
       }
       console.log('Supabase connection test passed');
 
-      // Extract username from email (everything before @gmail.com)
-      const emailUsername = user.primaryEmailAddress?.emailAddress?.split('@')[0] || 'user';
-
-      // Get user profile (should exist due to webhook)
-      const userProfile = await db.getUserProfile(user.id);
-      console.log('User profile loaded:', userProfile);
+      // Get user profile via backend API (bypasses RLS issues)
+      let userProfile;
+      try {
+        console.log('Fetching user profile via backend API...');
+        const response = await fetch(`http://localhost:3000/api/users/${user.id}`);
+        const result = await response.json();
+        
+        if (response.ok) {
+          userProfile = result.data;
+          console.log('User profile loaded via backend:', userProfile);
+        } else {
+          throw new Error(result.error || 'Failed to fetch user profile');
+        }
+      } catch (error) {
+        console.log('User profile not found, creating new profile via backend...');
+        // Use Clerk username if available, otherwise extract from email
+        const clerkUsername = user.username || user.firstName || user.lastName;
+        const emailUsername = user.primaryEmailAddress?.emailAddress?.split('@')[0] || 'user';
+        const displayUsername = clerkUsername || emailUsername;
+        
+        // Extract first and last names from various possible locations in Clerk user object
+        const firstName = user.firstName || 
+                         user.first_name || 
+                         user.givenName || 
+                         user.name?.split(' ')[0] || 
+                         null;
+        const lastName = user.lastName || 
+                        user.last_name || 
+                        user.familyName || 
+                        user.name?.split(' ').slice(1).join(' ') || 
+                        null;
+        
+        console.log('Extracted names:', { firstName, lastName });
+        
+        try {
+          const response = await fetch('http://localhost:3000/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              clerk_id: user.id,
+              username: displayUsername,
+              first_name: firstName,
+              last_name: lastName,
+              email: user.primaryEmailAddress?.emailAddress || '',
+              level: 1,
+              points: 0,
+              streak: 0,
+              total_minutes: 0
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            userProfile = result.data;
+            console.log('New user profile created via backend:', userProfile);
+          } else if (result.error && result.error.includes('duplicate key')) {
+            // User already exists, try to get the existing profile
+            console.log('User already exists, fetching existing profile...');
+            const getResponse = await fetch(`http://localhost:3000/api/users/${user.id}`);
+            const getResult = await getResponse.json();
+            
+            if (getResponse.ok) {
+              userProfile = getResult.data;
+              console.log('Existing user profile loaded:', userProfile);
+            } else {
+              throw new Error('Failed to get existing user profile');
+            }
+          } else {
+            throw new Error(result.error || `HTTP error! status: ${response.status}`);
+          }
+        } catch (apiError) {
+          console.error('Failed to create/get user profile via backend:', apiError);
+          // Fall back to default user data
+          userProfile = {
+            username: displayUsername,
+            first_name: firstName,
+            last_name: lastName,
+            email: user.primaryEmailAddress?.emailAddress || '',
+            level: 1,
+            points: 0,
+            streak: 0,
+            total_minutes: 0
+          };
+        }
+      }
 
       // Set user data
       setUserData({
-        username: userProfile.username,
-        level: userProfile.level,
-        points: userProfile.points,
-        streak: userProfile.streak,
-        totalMinutes: userProfile.total_minutes
+        username: userProfile?.username || displayUsername,
+        level: userProfile?.level || 1,
+        points: userProfile?.points || 0,
+        streak: userProfile?.streak || 0,
+        totalMinutes: userProfile?.total_minutes || 0
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -76,6 +167,18 @@ const Dashboard = ({ navigation }) => {
       if (error.message) {
         console.error('Error message:', error.message);
       }
+      
+      // Set fallback user data if everything fails
+      const clerkUsername = user?.username || user?.firstName || user?.lastName;
+      const emailUsername = user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'user';
+      const fallbackUsername = clerkUsername || emailUsername;
+      setUserData({
+        username: fallbackUsername,
+        level: 1,
+        points: 0,
+        streak: 0,
+        totalMinutes: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -92,27 +195,81 @@ const Dashboard = ({ navigation }) => {
     }
   };
 
-  const StatCard = ({ title, value, unit, chart }) => (
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              // The app will automatically redirect to login screen
+              // due to the isSignedIn state change in App.js
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const StatCard = ({ title, value, unit }) => (
     <View style={styles.statCard}>
       <View style={styles.statHeader}>
         <Text style={styles.statTitle}>{title}</Text>
         {title === 'Streak' ? (
-          <Image 
-            source={require('../../assets/images/health.png')}
-            style={styles.statIcon}
-          />
+          <View style={styles.heartIconContainer}>
+            <Image 
+              source={require('../../assets/images/health.png')}
+              style={styles.healthIcon}
+            />
+          </View>
         ) : (
-          <Image 
-            source={require('../../assets/images/minutes.png')}
-            style={styles.statIcon}
-          />
+          <View style={styles.teardropIconContainer}>
+            <Image 
+              source={require('../../assets/images/minutes.png')}
+              style={styles.streakIcon}
+            />
+          </View>
         )}
       </View>
-      <View style={styles.statContent}>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statUnit}>{unit}</Text>
+      
+        {/* Chart visualization */}
+        <View style={styles.chartContainer}>
+          {title === 'Streak' ? (
+            <View style={styles.smoothWaveChart}>
+              <View style={styles.waveContainer}>
+                {/* Single smooth wave line with gradient */}
+                <View style={styles.smoothWaveLine} />
+              </View>
+            </View>
+          ) : (
+          <View style={styles.barChart}>
+            <View style={[styles.bar, { height: 8, backgroundColor: '#8B5CF6' }]} />
+            <View style={[styles.bar, { height: 12, backgroundColor: '#A78BFA' }]} />
+            <View style={[styles.bar, { height: 6, backgroundColor: '#C4B5FD' }]} />
+            <View style={[styles.bar, { height: 10, backgroundColor: '#8B5CF6' }]} />
+            <View style={[styles.bar, { height: 14, backgroundColor: '#A78BFA' }]} />
+            <View style={[styles.bar, { height: 8, backgroundColor: '#C4B5FD' }]} />
+            <View style={[styles.bar, { height: 11, backgroundColor: '#8B5CF6' }]} />
+            <View style={[styles.bar, { height: 9, backgroundColor: '#A78BFA' }]} />
+          </View>
+        )}
       </View>
-      {chart}
+      
+        <View style={styles.statContent}>
+          <Text style={styles.statValue}>{title === 'Streak' ? '15' : value}</Text>
+          <Text style={styles.statUnit}>{unit}</Text>
+        </View>
     </View>
   );
 
@@ -133,7 +290,7 @@ const Dashboard = ({ navigation }) => {
           {/* Header Section */}
           <View style={styles.headerSection}>
             <View>
-              <Text style={styles.greeting}>Hello {userData.username},</Text>
+              <Text style={styles.greeting}>Hello {userData.first_name || user?.firstName || user?.first_name || userData.username},</Text>
               <View style={styles.levelContainer}>
                 <Image 
                   source={require('../../assets/images/level.png')}
@@ -147,10 +304,15 @@ const Dashboard = ({ navigation }) => {
                 <Text style={styles.pointsText}>{userData.points} pts.</Text>
               </View>
             </View>
-            <Image 
-              source={require('../../assets/images/avatar.png')}
-              style={styles.avatar}
-            />
+            <View style={styles.headerRight}>
+              <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                <Ionicons name="log-out-outline" size={24} color="#6B7280" />
+              </TouchableOpacity>
+              <Image 
+                source={require('../../assets/images/avatar.png')}
+                style={styles.avatar}
+              />
+            </View>
           </View>
 
           {/* Date and Start Button Section */}
@@ -161,22 +323,6 @@ const Dashboard = ({ navigation }) => {
               <Text style={styles.monthYear}>{currentMonth}</Text>
             </View>
             
-            {/* Vertical buttons container */}
-            <View style={styles.verticalButtons}>
-              <TouchableOpacity style={styles.iconButton}>
-                <Image 
-                  source={require('../../assets/images/bell.png')}
-                  style={styles.iconButtonImage}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
-                <Image 
-                  source={require('../../assets/images/history.png')}
-                  style={styles.iconButtonImage}
-                />
-              </TouchableOpacity>
-            </View>
-
             <TouchableOpacity 
               style={styles.startButton}
               onPress={() => navigation.navigate('MoodScreen')}
@@ -192,12 +338,13 @@ const Dashboard = ({ navigation }) => {
           {/* Information Section */}
           <View style={styles.infoSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.infoTitle}>Stats</Text>
+              <Text style={styles.infoTitle}>Information</Text>
               <TouchableOpacity>
-                <Image 
-                  source={require('../../assets/images/fire.png')}
-                  style={styles.moreIcon}
-                />
+                <View style={styles.dotsContainer}>
+                  <View style={styles.dot} />
+                  <View style={styles.dot} />
+                  <View style={styles.dot} />
+                </View>
               </TouchableOpacity>
             </View>
             <View style={styles.statsContainer}>
@@ -248,6 +395,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginTop: 20,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+  },
   greeting: {
     fontSize: 32,
     fontWeight: '600',
@@ -288,65 +445,47 @@ const styles = StyleSheet.create({
   dateStartSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 32,
+    alignItems: 'flex-start',
+    marginTop: 24,
+    marginBottom: 8,
   },
   dateSection: {
     flex: 1,
   },
-  verticalButtons: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: 120,
-    marginRight: 16,
-  },
-  iconButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconButtonImage: {
-    width: 24,
-    height: 24,
-    tintColor: '#6B7280',
-  },
   todayText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   dateNumber: {
-    fontSize: 64,
+    fontSize: 72,
     fontWeight: '600',
     color: '#1F2937',
-    lineHeight: 72,
+    lineHeight: 80,
   },
   monthYear: {
-    fontSize: 20,
+    fontSize: 22,
     color: '#6B7280',
   },
   meditationIcon: {
-    width: 56,  
-    height: 56, 
+    width: 64,  
+    height: 64, 
     tintColor: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   startButton: {
-    backgroundColor: '#8B5CF6',
-    borderRadius: 20,
-    padding: 16,  
+    backgroundColor: '#8276EE',
+    borderRadius: 24,
+    padding: 20,  
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 120,
-    height: 120,
+    width: 140,
+    height: 140,
   },
   startText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
   sectionHeader: {
@@ -356,17 +495,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   infoSection: {
-    marginTop: 40,
+    marginTop: 24,
   },
   infoTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1F2937',
   },
-  moreIcon: {
-    width: 24,
-    height: 24,
-    tintColor: '#6B7280',
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#9CA3AF',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -374,37 +518,114 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(205, 184, 255, 0.3)', 
-    borderRadius: 20,
+    backgroundColor: '#F8F7FF',
+    borderRadius: 24,
     padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#CDB8FF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    // Gradient background effect - glass with stronger purple-pink
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(205, 184, 255, 0.45) 40%, rgba(255, 255, 255, 0.7) 70%, rgba(205, 184, 255, 0.3) 100%)',
+    // Glass effect
+    backdropFilter: 'blur(10px)',
   },
   statHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   statTitle: {
     fontSize: 16,
-    color: '#4B5563',
+    fontWeight: '600',
+    color: '#1F2937',
   },
-  statIcon: {
+  heartIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  healthIcon: {
     width: 20,
     height: 20,
     tintColor: '#8B5CF6',
   },
-  statContent: {
+  teardropIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  streakIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#8B5CF6',
+  },
+  chartContainer: {
+    height: 40,
     marginBottom: 16,
+    justifyContent: 'center',
+  },
+  smoothWaveChart: {
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  waveContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smoothWaveLine: {
+    width: '100%',
+    height: 4,
+    backgroundColor: '#FF6B9D',
+    borderRadius: 2,
+    position: 'relative',
+    shadowColor: '#FF6B9D',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    // Create wave effect using border radius
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+  barChart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    height: 20,
+    gap: 2,
+  },
+  bar: {
+    width: 4,
+    borderRadius: 2,
+  },
+  statContent: {
+    alignItems: 'flex-start',
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: '600',
+    fontSize: 36,
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 4,
   },
   statUnit: {
     fontSize: 14,
     color: '#6B7280',
+    fontWeight: '500',
   },
   streakChart: {
     height: 40,
@@ -417,27 +638,30 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   quoteSection: {
-    marginTop: 24,
-    backgroundColor: 'rgba(139, 92, 246, 0.05)', 
+    marginTop: 20,
+    backgroundColor: '#F4F6FA',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.1)', 
-    shadowColor: '#000',
+    borderColor: 'rgba(45, 49, 66, 0.1)', 
+    shadowColor: '#2D3142',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    // Gradient background mixing 2D3142 and F4F6FA
+    background: 'linear-gradient(135deg, rgba(45, 49, 66, 0.05) 0%, rgba(244, 246, 250, 0.9) 50%, rgba(45, 49, 66, 0.08) 100%)',
   },
   quoteTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#8B5CF6', 
+    color: '#2D3142', 
     marginBottom: 16,
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
   quoteText: {
     fontSize: 16,

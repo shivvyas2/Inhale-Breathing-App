@@ -46,9 +46,13 @@ router.post('/clerk', async (req, res) => {
 
 async function handleUserCreated(userData) {
   try {
-    const { id, email_addresses, username } = userData;
+    const { id, email_addresses, username, first_name, last_name } = userData;
     const email = email_addresses?.[0]?.email_address || '';
-    const displayName = username || email.split('@')[0] || 'user';
+    // Use username, then first_name + last_name, then email prefix, then 'user'
+    const displayName = username || 
+                       (first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name) ||
+                       email.split('@')[0] || 
+                       'user';
 
     // Create user profile
     const { error: userError } = await supabase
@@ -56,6 +60,8 @@ async function handleUserCreated(userData) {
       .insert([{
         id: id, // Clerk user ID as primary key
         username: displayName,
+        first_name: first_name || null,
+        last_name: last_name || null,
         email: email,
         level: 1,
         points: 0,
@@ -72,7 +78,7 @@ async function handleUserCreated(userData) {
         user_id: id,
         current_streak: 0,
         longest_streak: 0,
-        last_session_date: null
+        last_activity_date: null
       }]);
 
     if (streakError) throw streakError;
@@ -86,14 +92,20 @@ async function handleUserCreated(userData) {
 
 async function handleUserUpdated(userData) {
   try {
-    const { id, email_addresses, username } = userData;
+    const { id, email_addresses, username, first_name, last_name } = userData;
     const email = email_addresses?.[0]?.email_address || '';
-    const displayName = username || email.split('@')[0] || 'user';
+    // Use username, then first_name + last_name, then email prefix, then 'user'
+    const displayName = username || 
+                       (first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name) ||
+                       email.split('@')[0] || 
+                       'user';
 
     const { error } = await supabase
       .from('users')
       .update({
         username: displayName,
+        first_name: first_name || null,
+        last_name: last_name || null,
         email: email
       })
       .eq('id', id);

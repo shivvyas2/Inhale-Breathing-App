@@ -86,7 +86,7 @@ router.post('/:userId/increment', async (req, res) => {
       .update({
         current_streak: newCurrentStreak,
         longest_streak: newLongestStreak,
-        last_session_date: new Date().toISOString().split('T')[0]
+        last_activity_date: new Date().toISOString().split('T')[0]
       })
       .eq('user_id', userId)
       .select()

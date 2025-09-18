@@ -35,7 +35,7 @@ const CongratsBottomSheet = ({ navigation, sessionData = {} }) => {
 
       await db.createSession(sessionRecord);
 
-      // Get updated user data
+      // Get updated user data (streak will be automatically updated by createSession)
       const updatedProfile = await db.getUserProfile(user.id);
       
       setStreak(updatedProfile.streak);

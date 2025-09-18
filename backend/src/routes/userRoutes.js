@@ -114,7 +114,7 @@ router.get('/:clerkId', async (req, res) => {
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('clerk_id', clerkId)
+      .eq('id', clerkId)
       .single();
 
     if (error) {
@@ -159,9 +159,22 @@ router.get('/:clerkId', async (req, res) => {
  */
 router.post('/', validateUser, async (req, res) => {
   try {
+    // Map clerk_id to id for database schema
+    const userData = {
+      id: req.body.clerk_id,
+      username: req.body.username,
+      first_name: req.body.first_name || null,
+      last_name: req.body.last_name || null,
+      email: req.body.email,
+      level: req.body.level,
+      points: req.body.points,
+      streak: req.body.streak,
+      total_minutes: req.body.total_minutes
+    };
+
     const { data, error } = await supabase
       .from('users')
-      .insert([req.body])
+      .insert([userData])
       .select()
       .single();
 
@@ -212,7 +225,7 @@ router.put('/:clerkId', async (req, res) => {
     const { data, error } = await supabase
       .from('users')
       .update(req.body)
-      .eq('clerk_id', clerkId)
+      .eq('id', clerkId)
       .select()
       .single();
 
@@ -265,7 +278,7 @@ router.delete('/:clerkId', async (req, res) => {
     const { error } = await supabase
       .from('users')
       .delete()
-      .eq('clerk_id', clerkId);
+      .eq('id', clerkId);
 
     if (error) throw error;
 

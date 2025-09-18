@@ -96,12 +96,22 @@ export const supabase = createClient(
 // Helper function to set user context for RLS
 const setUserContext = async (userId: string): Promise<void> => {
   try {
-    await supabase.rpc('set_config', {
+    // Try to set the user context using the RPC function
+    const { error } = await supabase.rpc('set_config', {
       setting_name: 'app.current_user_id',
       setting_value: userId
     });
+    
+    if (error) {
+      console.warn('Failed to set user context via RPC:', error);
+      // The RPC function might not exist or might not be working
+      // This is expected if the database doesn't have the set_config function
+    } else {
+      console.log('User context set successfully for:', userId);
+    }
   } catch (error) {
     console.warn('Failed to set user context:', error);
+    // This is expected if the RPC function doesn't exist
   }
 };
 
@@ -121,8 +131,11 @@ export const db = {
       
       if (error) {
         console.error('Supabase error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
+      
+      console.log('Successfully retrieved user profile:', data);
       return data;
     } catch (error) {
       console.error('Error in getUserProfile:', error);
@@ -185,6 +198,10 @@ export const db = {
     if (error) {
       throw error;
     }
+
+    // Update streak after session creation
+    await this.updateUserStreak(sessionData.user_id);
+    
     return data;
   },
 
@@ -230,6 +247,121 @@ export const db = {
       throw error;
     }
     return data || 0;
+  },
+
+  // Update user streak based on session activity
+  async updateUserStreak(userId: string): Promise<void> {
+    await setUserContext(userId);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get current streak data
+    const { data: streakData, error: streakError } = await supabase
+      .from('streaks')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (streakError && streakError.code !== 'PGRST116') {
+      throw streakError;
+    }
+    
+    // Get user's last session date from sessions table
+    const { data: lastSession, error: sessionError } = await supabase
+      .from('sessions')
+      .select('completed_at')
+      .eq('user_id', userId)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (sessionError && sessionError.code !== 'PGRST116') {
+      throw sessionError;
+    }
+    
+    const lastSessionDate = lastSession?.completed_at ? 
+      new Date(lastSession.completed_at).toISOString().split('T')[0] : null;
+    
+    let newCurrentStreak = 1;
+    let newLongestStreak = 1;
+    
+    if (streakData) {
+      const lastActivityDate = streakData.last_activity_date;
+      const daysSinceLastActivity = lastActivityDate ? 
+        Math.floor((new Date(today).getTime() - new Date(lastActivityDate).getTime()) / (1000 * 60 * 60 * 24)) : 1;
+      
+      if (daysSinceLastActivity === 1) {
+        // Consecutive day - increment streak
+        newCurrentStreak = streakData.current_streak + 1;
+        newLongestStreak = Math.max(newCurrentStreak, streakData.longest_streak);
+      } else if (daysSinceLastActivity > 1) {
+        // Streak broken - reset to 1
+        newCurrentStreak = 1;
+        newLongestStreak = streakData.longest_streak;
+      } else {
+        // Same day - keep current streak
+        newCurrentStreak = streakData.current_streak;
+        newLongestStreak = streakData.longest_streak;
+      }
+      
+      // Update existing streak
+      const { error: updateError } = await supabase
+        .from('streaks')
+        .update({
+          current_streak: newCurrentStreak,
+          longest_streak: newLongestStreak,
+          last_activity_date: today,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+      
+      if (updateError) throw updateError;
+    } else {
+      // Create new streak record
+      const { error: createError } = await supabase
+        .from('streaks')
+        .insert({
+          user_id: userId,
+          current_streak: 1,
+          longest_streak: 1,
+          last_activity_date: today
+        });
+      
+      if (createError) throw createError;
+    }
+    
+    // Update user's streak field and last_session_date in users table
+    const { error: userUpdateError } = await supabase
+      .from('users')
+      .update({
+        streak: newCurrentStreak,
+        last_session_date: today,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+    
+    if (userUpdateError) throw userUpdateError;
+  },
+
+  // Get comprehensive streak data
+  async getStreakData(userId: string): Promise<{current: number, longest: number, lastActivity: string | null}> {
+    await setUserContext(userId);
+    
+    const { data, error } = await supabase
+      .from('streaks')
+      .select('current_streak, longest_streak, last_activity_date')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+    
+    return {
+      current: data?.current_streak || 0,
+      longest: data?.longest_streak || 0,
+      lastActivity: data?.last_activity_date || null
+    };
   },
 
   // Music functions

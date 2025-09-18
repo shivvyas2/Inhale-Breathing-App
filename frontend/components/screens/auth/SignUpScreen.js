@@ -38,6 +38,8 @@ export default function SignUpScreen({ navigation }) {
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [showCountryMenu, setShowCountryMenu] = useState(false);
@@ -93,7 +95,7 @@ export default function SignUpScreen({ navigation }) {
     if (!isLoaded) return;
 
     // Validate all required fields
-    if (!emailAddress || !password || !username) {
+    if (!emailAddress || !password || !username || !firstName || !lastName) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -106,13 +108,15 @@ export default function SignUpScreen({ navigation }) {
 
     setIsLoading(true);
     try {
-      console.log('Creating signup with:', { emailAddress, username });
+      console.log('Creating signup with:', { emailAddress, username, firstName, lastName });
 
       // Create the signup with required fields
       const signUpResult = await signUp.create({
         emailAddress: emailAddress,
         password,
         username,
+        firstName: firstName,
+        lastName: lastName,
       });
 
       console.log('Sign up result:', signUpResult);
@@ -275,6 +279,29 @@ export default function SignUpScreen({ navigation }) {
                     autoCapitalize="none"
                     placeholderTextColor="#6B7280"
                   />
+                </View>
+
+                <View style={styles.nameRow}>
+                  <View style={[styles.inputContainer, styles.nameInput]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="First Name"
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      autoCapitalize="words"
+                      placeholderTextColor="#6B7280"
+                    />
+                  </View>
+                  <View style={[styles.inputContainer, styles.nameInput]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChangeText={setLastName}
+                      autoCapitalize="words"
+                      placeholderTextColor="#6B7280"
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.phoneInputWrapper}>
@@ -555,6 +582,16 @@ const styles = StyleSheet.create({
     elevation: 2,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  nameInput: {
+    flex: 1,
+    marginHorizontal: 4,
+    marginBottom: 0,
   },
   input: {
     flex: 1,
