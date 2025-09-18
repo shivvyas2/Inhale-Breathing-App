@@ -461,6 +461,102 @@ export const db = {
       throw error;
     }
     return data || [];
+  },
+
+  // AI Music Generation functions
+  async getAIGeneratedMusic(userId: string, mood?: string) {
+    await setUserContext(userId);
+    
+    let query = supabase
+      .from('ai_generated_music')
+      .select('*')
+      .eq('user_id', userId)
+      .order('generated_at', { ascending: false });
+    
+    if (mood) {
+      query = query.eq('mood', mood);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async storeAIGeneratedMusic(musicData: any) {
+    const { data, error } = await supabase
+      .from('ai_generated_music')
+      .insert([musicData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getUserMusicPreferences(userId: string) {
+    await setUserContext(userId);
+    
+    const { data, error } = await supabase
+      .from('user_music_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+    
+    return data;
+  },
+
+  async updateUserMusicPreferences(userId: string, preferences: any) {
+    await setUserContext(userId);
+    
+    const { data, error } = await supabase
+      .from('user_music_preferences')
+      .upsert([{ user_id: userId, ...preferences }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async logMusicGenerationSession(sessionData: any) {
+    const { data, error } = await supabase
+      .from('music_generation_sessions')
+      .insert([sessionData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async getMusicGenerationStats(userId: string) {
+    await setUserContext(userId);
+    
+    const { data, error } = await supabase
+      .from('music_generation_sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const stats = {
+      totalSessions: data?.length || 0,
+      successfulSessions: data?.filter(s => s.success).length || 0,
+      averageGenerationTime: data?.reduce((acc, s) => acc + (s.generation_time_ms || 0), 0) / (data?.length || 1),
+      mostUsedMood: data?.reduce((acc, s) => {
+        acc[s.mood] = (acc[s.mood] || 0) + 1;
+        return acc;
+      }, {}),
+      lastGeneration: data?.[0]?.created_at
+    };
+    
+    return stats;
   }
 };
 

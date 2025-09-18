@@ -220,10 +220,12 @@ const ChooseSound = ({ navigation }) => {
       audio: selectedSound.audio_url || selectedSound.audio.toString()
     } : null;
     
-    navigation.navigate('BreathingScreen', {
+    // Navigate to AI Breathing Screen with AI music option
+    navigation.navigate('AIBreathingScreen', {
       selectedMood: store.mood.label,
       breathingPattern: store.breathingPattern,
-      selectedSound: simplifiedSound
+      selectedSound: simplifiedSound,
+      useAIMusic: true // Enable AI music generation
     });
   };
   return (
@@ -231,6 +233,33 @@ const ChooseSound = ({ navigation }) => {
       <Header showBack navigation={navigation} />
 
       <Text style={styles.title}>Choose soundtrack</Text>
+      
+      {/* AI Music Option */}
+      <View style={styles.aiMusicOption}>
+        <TouchableOpacity 
+          style={styles.aiMusicButton}
+          onPress={() => {
+            if (sound) {
+              sound.unloadAsync();
+            }
+            navigation.navigate('AIBreathingScreen', {
+              selectedMood: useAuthStore.getState().mood?.label || 'Calm',
+              breathingPattern: useAuthStore.getState().breathingPattern || { inhale: 4, hold1: 4, exhale: 4, hold2: 4 },
+              selectedSound: null,
+              useAIMusic: true
+            });
+          }}
+        >
+          <View style={styles.aiMusicContent}>
+            <Ionicons name="sparkles" size={24} color="#FFD700" />
+            <View style={styles.aiMusicText}>
+              <Text style={styles.aiMusicTitle}>AI Generated Music</Text>
+              <Text style={styles.aiMusicSubtitle}>Personalized based on your mood</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#8B5CF6" />
+          </View>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.tabsContainer}>
         <ScrollView 
@@ -408,6 +437,35 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
+    color: '#6B7280',
+  },
+  aiMusicOption: {
+    marginBottom: 20,
+    paddingHorizontal: 24,
+  },
+  aiMusicButton: {
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    padding: 16,
+  },
+  aiMusicContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aiMusicText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  aiMusicTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  aiMusicSubtitle: {
+    fontSize: 14,
     color: '#6B7280',
   },
 });
