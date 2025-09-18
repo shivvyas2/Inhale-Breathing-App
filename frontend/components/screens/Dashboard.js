@@ -267,7 +267,7 @@ const Dashboard = ({ navigation }) => {
       </View>
       
         <View style={styles.statContent}>
-          <Text style={styles.statValue}>{title === 'Streak' ? '15' : value}</Text>
+          <Text style={styles.statValue}>{value}</Text>
           <Text style={styles.statUnit}>{unit}</Text>
         </View>
     </View>

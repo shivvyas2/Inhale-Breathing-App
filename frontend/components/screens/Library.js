@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import { useUser } from '@clerk/clerk-expo';
+import { db } from '../../supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -19,48 +21,98 @@ const Library = ({ navigation }) => {
   const [sound, setSound] = useState();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [meditationData, setMeditationData] = useState([]);
+  const [userSessions, setUserSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
 
   const tabs = ['All', 'Focus', 'Meditate', 'Anxiety', 'Calm', 'Sleep', 'Reading', 'Nature'];
 
-  const meditationData = [
-    {
-      id: 1, 
-      title: 'Lost', 
-      duration: '30:30',
-      categories: ['Mindfulness', 'Meditate', 'Calm'],
-      image: require('../../assets/images/lost.png'),
-      audio: require('../../assets/audio/lost.wav')
-    },
-    {
-      id: 2, 
-      title: 'Discover', 
-      duration: '30:30', 
-      categories: ['Mindfulness', 'Focus', 'Reading'],
-      image: require('../../assets/images/discover.png'),
-      audio: require('../../assets/audio/discover.wav')
-    },
-    {
-      id: 3, 
-      title: 'Journey', 
-      duration: '30:30', 
-      categories: ['Gratitude', 'Sleep', 'Nature'],
-      image: require('../../assets/images/journey.png'),
-      audio: require('../../assets/audio/journey.wav')
-    },
-    {
-      id: 4, 
-      title: 'Joyful', 
-      duration: '30:30', 
-      categories: ['Mindfulness', 'Anxiety', 'Calm'],
-      image: require('../../assets/images/joyful.png'),
-      audio: require('../../assets/audio/joyful.wav')
-    },
-  ];
+  // Load data from Supabase
+  useEffect(() => {
+    loadLibraryData();
+  }, [user]);
+
+  const loadLibraryData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load music data
+      const music = await db.getMusic();
+      
+      // Load user sessions if user is logged in
+      let sessions = [];
+      if (user) {
+        sessions = await db.getUserSessions(user.id);
+      }
+      
+      // Combine music with session data
+      const combinedData = music.map(musicItem => {
+        const sessionCount = sessions.filter(session => 
+          session.music_id === musicItem.id
+        ).length;
+        
+        return {
+          ...musicItem,
+          sessionCount,
+          lastPlayed: sessions
+            .filter(session => session.music_id === musicItem.id)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]?.created_at
+        };
+      });
+      
+      setMeditationData(combinedData);
+      setUserSessions(sessions);
+    } catch (error) {
+      console.error('Error loading library data:', error);
+      // Fallback to local data
+      setMeditationData([
+        {
+          id: 1, 
+          name: 'Lost', 
+          duration: '30:30',
+          category: 'Calm',
+          image_url: require('../../assets/images/lost.png'),
+          audio_url: require('../../assets/audio/lost.wav'),
+          sessionCount: 0
+        },
+        {
+          id: 2, 
+          name: 'Discover', 
+          duration: '30:30', 
+          category: 'Focus',
+          image_url: require('../../assets/images/discover.png'),
+          audio_url: require('../../assets/audio/discover.wav'),
+          sessionCount: 0
+        },
+        {
+          id: 3, 
+          name: 'Journey', 
+          duration: '30:30', 
+          category: 'Nature',
+          image_url: require('../../assets/images/journey.png'),
+          audio_url: require('../../assets/audio/journey.wav'),
+          sessionCount: 0
+        },
+        {
+          id: 4, 
+          name: 'Joyful', 
+          duration: '30:30', 
+          category: 'Meditate',
+          image_url: require('../../assets/images/joyful.png'),
+          audio_url: require('../../assets/audio/joyful.wav'),
+          sessionCount: 0
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter meditation items based on active tab
   const filteredMeditations = meditationData.filter(item => {
     if (activeTab === 'All') return true;
-    return item.categories.includes(activeTab);
+    return item.category === activeTab;
   });
 
   useEffect(() => {
@@ -91,8 +143,10 @@ const Library = ({ navigation }) => {
         setSound(null);
         setSelectedItem(null);
       } else {
+        // Use audio_url from Supabase data or fallback to local require
+        const audioSource = item.audio_url || item.audio;
         const { sound: newSound } = await Audio.Sound.createAsync(
-          item.audio,
+          audioSource,
           { shouldPlay: true, isLooping: true }
         );
         
@@ -117,13 +171,21 @@ const Library = ({ navigation }) => {
       style={styles.meditationItem}
       onPress={() => playSound(item)}
     >
-      <Image source={item.image} style={styles.meditationImage} />
+      <Image 
+        source={item.image_url || item.image} 
+        style={styles.meditationImage} 
+      />
       
       <View style={styles.meditationInfo}>
         <Text style={styles.timeCategory}>
-          {item.duration} · {item.categories[0]}
+          {item.duration} · {item.category}
         </Text>
-        <Text style={styles.meditationTitle}>{item.title}</Text>
+        <Text style={styles.meditationTitle}>{item.name || item.title}</Text>
+        {item.sessionCount > 0 && (
+          <Text style={styles.sessionCount}>
+            {item.sessionCount} session{item.sessionCount !== 1 ? 's' : ''}
+          </Text>
+        )}
       </View>
 
       <TouchableOpacity 
@@ -183,7 +245,13 @@ const Library = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.meditationList}>
-        {filteredMeditations.map(renderMeditationItem)}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading library...</Text>
+          </View>
+        ) : (
+          filteredMeditations.map(renderMeditationItem)
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -273,6 +341,22 @@ const styles = StyleSheet.create({
   
   playingOverlay: {
     backgroundColor: 'rgba(139, 92, 246, 0.85)',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  sessionCount: {
+    fontSize: 12,
+    color: '#8B5CF6',
+    marginTop: 2,
+    fontWeight: '500',
   },
 });
 

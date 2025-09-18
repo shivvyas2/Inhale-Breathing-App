@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
-import Header from './Header'; // Adjust the import path based on your file structure
+import Header from './Header';
+import { useUser } from '@clerk/clerk-expo';
+import { db } from '../../supabase';
 
-const SelectMood = () => {
+const SelectMood = ({ navigation }) => {
     const [selectedMood, setSelectedMood] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const { user } = useUser();
 
     const MoodOption = ({ mood, isSelected, onPress }) => (
         <TouchableOpacity 
@@ -20,27 +24,70 @@ const SelectMood = () => {
         </TouchableOpacity>
     );
 
+    const handleMoodSelect = async (mood) => {
+        setSelectedMood(mood);
+        
+        try {
+            setLoading(true);
+            
+            // Save mood selection to Supabase if user is logged in
+            if (user) {
+                await db.updateUserProfile(user.id, { 
+                    current_mood: mood,
+                    updated_at: new Date().toISOString()
+                });
+            }
+            
+            // Navigate to next screen after a short delay
+            setTimeout(() => {
+                navigation.navigate('ChooseSound');
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error saving mood:', error);
+            // Still navigate even if save fails
+            navigation.navigate('ChooseSound');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
             <Header />
             <Text style={styles.title}>What's your mood?</Text>
             
-            <View style={styles.moodOptionContainer}>
+            <View style={styles.moodOptionsContainer}>
                     <MoodOption 
                         mood="Anxious"
                         isSelected={selectedMood === 'Anxious'}
-                        onPress={() => setSelectedMood('Anxious')}
+                        onPress={() => handleMoodSelect('Anxious')}
                     />
                     <MoodOption 
                         mood="Distracted"
                         isSelected={selectedMood === 'Distracted'}
-                        onPress={() => setSelectedMood('Distracted')}
+                        onPress={() => handleMoodSelect('Distracted')}
                     />
                     <MoodOption 
                         mood="Sleepy"
                         isSelected={selectedMood === 'Sleepy'}
-                        onPress={() => setSelectedMood('Sleepy')}
+                        onPress={() => handleMoodSelect('Sleepy')}
+                    />
+                    <MoodOption 
+                        mood="Stressed"
+                        isSelected={selectedMood === 'Stressed'}
+                        onPress={() => handleMoodSelect('Stressed')}
+                    />
+                    <MoodOption 
+                        mood="Calm"
+                        isSelected={selectedMood === 'Calm'}
+                        onPress={() => handleMoodSelect('Calm')}
+                    />
+                    <MoodOption 
+                        mood="Focused"
+                        isSelected={selectedMood === 'Focused'}
+                        onPress={() => handleMoodSelect('Focused')}
                     />
                 </View>
         </View>
@@ -63,8 +110,16 @@ const styles = StyleSheet.create({
         color: '#1F2937',
         lineHeight: 38,
     },
+    moodOptionsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
     moodOptionContainer: {
         alignItems: 'center',
+        width: '30%',
+        marginBottom: 20,
     },
     moodCircle: {
         width: 80,

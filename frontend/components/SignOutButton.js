@@ -1,6 +1,7 @@
 import React from 'react';
 import { useClerk } from '@clerk/clerk-expo';
 import { Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { db } from '../supabase';
 
 export const SignOutButton = () => {
   // Use `useClerk()` to access the `signOut()` function
@@ -8,6 +9,14 @@ export const SignOutButton = () => {
 
   const handleSignOut = async () => {
     try {
+      // Clear any Supabase session data if needed
+      try {
+        await db.signOut();
+      } catch (supabaseError) {
+        console.warn('Supabase signout warning:', supabaseError);
+        // Continue with Clerk signout even if Supabase cleanup fails
+      }
+      
       // Calling signOut will automatically clear the session and update the
       // isLoaded/isSignedIn state in App.js, triggering the redirect.
       await signOut();

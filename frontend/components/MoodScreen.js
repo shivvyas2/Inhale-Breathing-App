@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '@clerk/clerk-expo';
+import { db } from '../supabase';
 import useAuthStore from '../stores/useAuthStore';
 import Header from './screens/Header';
 
@@ -11,6 +13,8 @@ const OPTION_WIDTH = (width - 60) / 2;
 const MoodScreen = ({ navigation }) => {
   const [selectedMood, setSelectedMood] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { user } = useUser();
   const setStoreMood = useAuthStore((state) => state.setSelectedMood);
 
   const moods = [
@@ -54,15 +58,39 @@ const MoodScreen = ({ navigation }) => {
     { id: 3, label: 'Sleep', icon: 'bed' },
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selectedMood && selectedActivity) {
-      const selectedMoodData = moods.find(mood => mood.id === selectedMood.id);
-      setStoreMood({ 
-        mood: selectedMood, 
-        activity: selectedActivity,
-        breathingPattern: selectedMoodData.pattern
-      });
-      navigation.navigate('ChooseSound');
+      try {
+        setLoading(true);
+        
+        const selectedMoodData = moods.find(mood => mood.id === selectedMood.id);
+        
+        // Save mood and activity to Supabase if user is logged in
+        if (user) {
+          await db.updateUserProfile(user.id, { 
+            current_mood: selectedMood.label,
+            current_activity: selectedActivity.label,
+            breathing_pattern: selectedMoodData.pattern,
+            updated_at: new Date().toISOString()
+          });
+        }
+        
+        // Update local store
+        setStoreMood({ 
+          mood: selectedMood, 
+          activity: selectedActivity,
+          breathingPattern: selectedMoodData.pattern
+        });
+        
+        navigation.navigate('ChooseSound');
+        
+      } catch (error) {
+        console.error('Error saving mood data:', error);
+        // Still navigate even if save fails
+        navigation.navigate('ChooseSound');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -147,11 +175,14 @@ const MoodScreen = ({ navigation }) => {
       {selectedMood && selectedActivity && (
         <View style={styles.bottomContainer}>
           <TouchableOpacity 
-            style={styles.nextButton}
+            style={[styles.nextButton, loading && styles.loadingButton]}
             onPress={handleNext}
+            disabled={loading}
           >
-            <Text style={styles.nextButtonText}>Next</Text>
-            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+            <Text style={styles.nextButtonText}>
+              {loading ? 'Saving...' : 'Next'}
+            </Text>
+            {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
           </TouchableOpacity>
         </View>
       )}
@@ -256,6 +287,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginRight: 8,
+  },
+  loadingButton: {
+    opacity: 0.7,
   },
 });
 

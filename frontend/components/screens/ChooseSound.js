@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import Header from './Header';
 import useAuthStore from '../../stores/useAuthStore';
+import { db } from '../../supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -22,37 +23,77 @@ const ChooseSound = ({ navigation }) => {
   const [selectedSound, setSelectedSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [durations, setDurations] = useState({});
+  const [musicData, setMusicData] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const tabs = ['All', 'Sleep', 'Reading', 'Calm', 'Focus', 'Meditation', 'Nature'];
 
-  const musicData = {
-    All: [
-      { 
-        id: 1, 
-        title: 'Lost', 
-        image: require('../../assets/images/lost.png'),
-        audio: require('../../assets/audio/lost.wav')
-      },
-      { 
-        id: 2, 
-        title: 'Discover', 
-        image: require('../../assets/images/discover.png'),
-        audio: require('../../assets/audio/discover.wav')
-      },
-      { 
-        id: 3, 
-        title: 'Journey', 
-        image: require('../../assets/images/journey.png'),
-        audio: require('../../assets/audio/journey.wav')
-      },
-      { 
-        id: 4, 
-        title: 'Joyful', 
-        image: require('../../assets/images/joyful.png'),
-        audio: require('../../assets/audio/joyful.wav')
-      },
-    ],
-    // Add more categories...
+  // Load music data from Supabase
+  useEffect(() => {
+    loadMusicData();
+  }, []);
+
+  const loadMusicData = async () => {
+    try {
+      setLoading(true);
+      const music = await db.getMusic();
+      
+      // Group music by category
+      const groupedMusic = {
+        All: music,
+        Sleep: music.filter(item => item.category === 'Sleep'),
+        Reading: music.filter(item => item.category === 'Reading'),
+        Calm: music.filter(item => item.category === 'Calm'),
+        Focus: music.filter(item => item.category === 'Focus'),
+        Meditation: music.filter(item => item.category === 'Meditation'),
+        Nature: music.filter(item => item.category === 'Nature'),
+      };
+      
+      setMusicData(groupedMusic);
+    } catch (error) {
+      console.error('Error loading music:', error);
+      // Fallback to local data if Supabase fails
+      setMusicData({
+        All: [
+          { 
+            id: 1, 
+            name: 'Lost', 
+            image_url: require('../../assets/images/lost.png'),
+            audio_url: require('../../assets/audio/lost.wav'),
+            category: 'Calm'
+          },
+          { 
+            id: 2, 
+            name: 'Discover', 
+            image_url: require('../../assets/images/discover.png'),
+            audio_url: require('../../assets/audio/discover.wav'),
+            category: 'Focus'
+          },
+          { 
+            id: 3, 
+            name: 'Journey', 
+            image_url: require('../../assets/images/journey.png'),
+            audio_url: require('../../assets/audio/journey.wav'),
+            category: 'Nature'
+          },
+          { 
+            id: 4, 
+            name: 'Joyful', 
+            image_url: require('../../assets/images/joyful.png'),
+            audio_url: require('../../assets/audio/joyful.wav'),
+            category: 'Meditation'
+          },
+        ],
+        Sleep: [],
+        Reading: [],
+        Calm: [],
+        Focus: [],
+        Meditation: [],
+        Nature: [],
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDuration = (milliseconds) => {
@@ -90,8 +131,10 @@ const ChooseSound = ({ navigation }) => {
         setIsPlaying(false);
         setSound(null);
       } else {
+        // Use audio_url from Supabase data or fallback to local require
+        const audioSource = item.audio_url || item.audio;
         const { sound: newSound, status } = await Audio.Sound.createAsync(
-          item.audio,
+          audioSource,
           { shouldPlay: true, isLooping: true }
         );
         
@@ -128,7 +171,10 @@ const ChooseSound = ({ navigation }) => {
         styles.musicCover,
         selectedSound?.id === item.id && styles.selectedMusicCover
       ]}>
-        <Image source={item.image} style={styles.coverImage} />
+        <Image 
+          source={item.image_url || item.image} 
+          style={styles.coverImage} 
+        />
         <View style={styles.musicIcon}>
           <MaterialCommunityIcons 
             name={selectedSound?.id === item.id && isPlaying ? "pause" : "play"} 
@@ -150,7 +196,7 @@ const ChooseSound = ({ navigation }) => {
         styles.musicTitle,
         selectedSound?.id === item.id && styles.selectedMusicTitle
       ]}>
-        {item.title}
+        {item.name || item.title}
       </Text>
     </TouchableOpacity>
   );
@@ -169,9 +215,9 @@ const ChooseSound = ({ navigation }) => {
     // Create a simplified sound object with only necessary data
     const simplifiedSound = selectedSound ? {
       id: selectedSound.id,
-      title: selectedSound.title,
-      // Convert require() to string path for storage
-      audio: selectedSound.audio.toString()
+      title: selectedSound.name || selectedSound.title,
+      // Use audio_url from Supabase or fallback to audio
+      audio: selectedSound.audio_url || selectedSound.audio.toString()
     } : null;
     
     navigation.navigate('BreathingScreen', {
@@ -214,7 +260,13 @@ const ChooseSound = ({ navigation }) => {
 
       <ScrollView style={styles.gridContainer}>
         <View style={styles.grid}>
-          {musicData[activeTab]?.map(renderGridItem)}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading music...</Text>
+            </View>
+          ) : (
+            musicData[activeTab]?.map(renderGridItem)
+          )}
         </View>
       </ScrollView>
 
@@ -347,6 +399,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
 

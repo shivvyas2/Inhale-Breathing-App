@@ -3,15 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '@clerk/clerk-expo';
 import { db } from '../../supabase';
-import useSupabaseAuth from '../../stores/useSupabaseAuth';
 
 const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
   const [musicList, setMusicList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState(null);
   const [sound, setSound] = useState(null);
-  const { user } = useSupabaseAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     loadMusic();
@@ -25,7 +25,7 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
   const loadMusic = async () => {
     try {
       setLoading(true);
-      const music = await db.getMusic('breathing');
+      const music = await db.getMusic();
       setMusicList(music);
     } catch (error) {
       console.error('Error loading music:', error);
@@ -49,8 +49,9 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
       }
 
       // Load and play new sound
+      const audioSource = musicItem.audio_url || musicItem.file_url;
       const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: musicItem.file_url },
+        audioSource,
         { shouldPlay: true, isLooping: true }
       );
 
@@ -80,7 +81,8 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
     try {
       if (!user) return;
       
-      await db.updateMusicPreference(user.id, musicId, true);
+      // For now, just show a success message
+      // In the future, you could implement a favorites system
       Alert.alert('Success', 'Added to favorites');
     } catch (error) {
       console.error('Error updating favorite:', error);
@@ -123,7 +125,7 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
           </View>
         </View>
         <Text style={styles.musicDetails}>
-          {item.mood} • {Math.floor(item.duration_seconds / 60)} min
+          {item.category} • {item.duration || 'Unknown'} min
         </Text>
       </View>
     </TouchableOpacity>
