@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Dashboard from '../components/screens/Dashboard';
 import Library from '../components/screens/Library';
@@ -31,7 +31,7 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({ focused, color }) => (
             <View style={styles.tabItem}>
-              <Ionicons name="home" size={24} color={color} />
+              <MaterialCommunityIcons name="home" size={24} color={color} />
               {focused && <View style={styles.indicator} />}
             </View>
           ),
@@ -43,7 +43,7 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({ focused, color }) => (
             <View style={styles.tabItem}>
-              <Ionicons name="library" size={24} color={color} />
+              <MaterialCommunityIcons name="library" size={24} color={color} />
               {focused && <View style={styles.indicator} />}
             </View>
           ),

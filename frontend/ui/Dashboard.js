@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from './Header'; // Adjust the import path based on your file structure
 
 const Dashboard = () => {
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Header />
       {/* Add your other dashboard content here */}
     </SafeAreaView>

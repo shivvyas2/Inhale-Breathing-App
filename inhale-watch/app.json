@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Inhale Watch",
+    "slug": "inhale-watch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E1B4B"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.inhale.watch",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "This app uses heart rate data to provide personalized breathing exercises for anxiety relief.",
+        "NSHealthUpdateUsageDescription": "This app uses heart rate data to provide personalized breathing exercises for anxiety relief.",
+        "NSMotionUsageDescription": "This app uses motion data to enhance breathing exercise guidance."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E1B4B"
+      },
+      "package": "com.inhale.watch",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.BODY_SENSORS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow $(PRODUCT_NAME) to access motion data for enhanced breathing guidance."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    }
+  }
+}

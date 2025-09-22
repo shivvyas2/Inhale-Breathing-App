@@ -1,9 +1,10 @@
 // Dashboard.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser, useClerk } from '@clerk/clerk-expo';
 import { db, supabase } from '../../supabase';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Dashboard = ({ navigation }) => {
   const [quote, setQuote] = useState('');
@@ -65,18 +66,11 @@ const Dashboard = ({ navigation }) => {
       // Get user profile via backend API (bypasses RLS issues)
       let userProfile;
       try {
-        console.log('Fetching user profile via backend API...');
-        const response = await fetch(`http://localhost:3000/api/users/${user.id}`);
-        const result = await response.json();
-        
-        if (response.ok) {
-          userProfile = result.data;
-          console.log('User profile loaded via backend:', userProfile);
-        } else {
-          throw new Error(result.error || 'Failed to fetch user profile');
-        }
+        console.log('Fetching user profile from Supabase...');
+        userProfile = await db.getUserProfile(user.id);
+        console.log('User profile loaded from Supabase:', userProfile);
       } catch (error) {
-        console.log('User profile not found, creating new profile via backend...');
+        console.log('User profile not found, creating new profile...');
         // Use Clerk username if available, otherwise extract from email
         const clerkUsername = user.username || user.firstName || user.lastName;
         const emailUsername = user.primaryEmailAddress?.emailAddress?.split('@')[0] || 'user';
@@ -97,46 +91,15 @@ const Dashboard = ({ navigation }) => {
         console.log('Extracted names:', { firstName, lastName });
         
         try {
-          const response = await fetch('http://localhost:3000/api/users', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              clerk_id: user.id,
-              username: displayUsername,
-              first_name: firstName,
-              last_name: lastName,
-              email: user.primaryEmailAddress?.emailAddress || '',
-              level: 1,
-              points: 0,
-              streak: 0,
-              total_minutes: 0
-            })
+          userProfile = await db.createUserProfile(user.id, {
+            username: displayUsername,
+            first_name: firstName,
+            last_name: lastName,
+            email: user.primaryEmailAddress?.emailAddress || null
           });
-          
-          const result = await response.json();
-          
-          if (response.ok) {
-            userProfile = result.data;
-            console.log('New user profile created via backend:', userProfile);
-          } else if (result.error && result.error.includes('duplicate key')) {
-            // User already exists, try to get the existing profile
-            console.log('User already exists, fetching existing profile...');
-            const getResponse = await fetch(`http://localhost:3000/api/users/${user.id}`);
-            const getResult = await getResponse.json();
-            
-            if (getResponse.ok) {
-              userProfile = getResult.data;
-              console.log('Existing user profile loaded:', userProfile);
-            } else {
-              throw new Error('Failed to get existing user profile');
-            }
-          } else {
-            throw new Error(result.error || `HTTP error! status: ${response.status}`);
-          }
-        } catch (apiError) {
-          console.error('Failed to create/get user profile via backend:', apiError);
+          console.log('New user profile created:', userProfile);
+        } catch (createError) {
+          console.error('Failed to create user profile:', createError);
           // Fall back to default user data
           userProfile = {
             username: displayUsername,
@@ -275,7 +238,7 @@ const Dashboard = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <Text>Loading...</Text>
         </View>
@@ -284,7 +247,7 @@ const Dashboard = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Header Section */}
@@ -306,7 +269,7 @@ const Dashboard = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                <Ionicons name="log-out-outline" size={24} color="#6B7280" />
+                <MaterialCommunityIcons name="logout" size={24} color="#6B7280" />
               </TouchableOpacity>
               <Image 
                 source={require('../../assets/images/avatar.png')}

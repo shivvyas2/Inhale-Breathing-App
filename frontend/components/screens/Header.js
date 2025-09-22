@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { db } from '../../supabase';
 
@@ -32,7 +32,7 @@ const Header = ({ showBack, navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={24} color="#1F2937" />
+          <MaterialCommunityIcons name="chevron-left" size={24} color="#1F2937" />
         </TouchableOpacity>
       )}
       

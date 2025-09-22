@@ -16,37 +16,31 @@ export const AI_MUSIC_CONFIG = {
   CACHE_THRESHOLD: 10, // Generate new music after 10 sessions
   MAX_CACHED_MUSIC: 5, // Maximum cached AI music per user
   
-  // Mood to Music Prompt Mapping
+  // Mood to Music Prompt Mapping - Endel-style adaptive music
   MOOD_PROMPTS: {
-    'Anxious': {
-      base: 'Calming ambient music with soft pads, gentle strings, and minimal percussion',
-      tempo: 'Slow tempo (60-70 BPM) to reduce anxiety',
-      elements: ['soft pads', 'gentle strings', 'minimal percussion', 'warm tones']
+    'Anxiety Relief': {
+      base: 'Create a deeply calming ambient soundscape with soft, warm pads, gentle string swells, and subtle nature sounds',
+      tempo: 'Slow tempo (60-70 BPM) with grounding frequencies around 40-60 Hz',
+      elements: ['soft warm pads', 'gentle string swells', 'nature sounds', 'rain or ocean waves', 'deep resonant frequencies'],
+      description: 'Music that feels like a warm embrace, helping to slow down racing thoughts and reduce anxiety'
     },
-    'Distracted': {
-      base: 'Focus music with steady rhythm, subtle electronic elements, and consistent beat',
-      tempo: 'Moderate tempo (80-90 BPM) to improve concentration',
-      elements: ['steady rhythm', 'electronic elements', 'consistent beat', 'minimal vocals']
+    'Meditate': {
+      base: 'Generate a minimalist meditation track with sustained tones, Tibetan singing bowls, and subtle harmonic drones',
+      tempo: 'Very slow tempo (50-60 BPM) with frequencies that promote deep focus',
+      elements: ['sustained tones', 'Tibetan singing bowls', 'harmonic drones', 'gentle chimes', 'soft bells', 'breath-like textures'],
+      description: 'Music that supports deep breathing and mindfulness practice with spacious arrangements'
     },
-    'Sleepy': {
-      base: 'Sleep-inducing ambient music with deep bass, soft melodies, and nature sounds',
-      tempo: 'Very slow tempo (50-60 BPM) for relaxation',
-      elements: ['deep bass', 'soft melodies', 'nature sounds', 'atmospheric pads']
+    'Wind Down': {
+      base: 'Create a peaceful bedtime ambient track with warm, soft synthesizers, gentle piano, and cozy textures',
+      tempo: 'Slow tempo (50-65 BPM) with lower frequencies to signal relaxation',
+      elements: ['warm synthesizers', 'gentle piano', 'cozy textures', 'crickets', 'gentle wind', 'soft rain'],
+      description: 'Music that feels like a lullaby for adults, promoting sleep and rest'
     },
-    'Stressed': {
-      base: 'Relaxing music with warm tones, gentle piano, and soft strings',
-      tempo: 'Slow tempo (65-75 BPM) to reduce stress',
-      elements: ['warm tones', 'gentle piano', 'soft strings', 'breathing space']
-    },
-    'Calm': {
-      base: 'Peaceful ambient music with flowing melodies, soft synthesizers, and gentle atmospheric sounds',
-      tempo: 'Moderate tempo (75-85 BPM) for tranquility',
-      elements: ['flowing melodies', 'soft synthesizers', 'atmospheric sounds', 'gentle progression']
-    },
-    'Focused': {
-      base: 'Concentration music with steady rhythm, minimal distractions, and consistent tempo',
-      tempo: 'Moderate tempo (80-90 BPM) for deep focus',
-      elements: ['steady rhythm', 'minimal distractions', 'consistent tempo', 'subtle variations']
+    'Focus': {
+      base: 'Generate a concentration-enhancing ambient track with steady, unobtrusive rhythms and subtle electronic elements',
+      tempo: 'Moderate tempo (70-80 BPM) with binaural beats around 40 Hz for focus',
+      elements: ['steady rhythms', 'subtle electronics', 'soft arpeggios', 'gentle percussion', 'atmospheric pads'],
+      description: 'Music that supports deep work without being distracting, like Endel focus mode'
     }
   },
   
@@ -109,7 +103,21 @@ export const calculateBPM = (breathingPattern) => {
 
 // Helper function to generate music prompt
 export const generateMusicPrompt = (mood, breathingPattern) => {
-  const moodConfig = AI_MUSIC_CONFIG.MOOD_PROMPTS[mood] || AI_MUSIC_CONFIG.MOOD_PROMPTS['Calm'];
+  // Map old mood names to new ones for backward compatibility
+  const moodMapping = {
+    'Anxious': 'Anxiety Relief',
+    'Anxiety Relief': 'Anxiety Relief',
+    'Meditate': 'Meditate',
+    'Wind Down': 'Wind Down',
+    'Focus': 'Focus',
+    'Calm': 'Anxiety Relief', // Default to Anxiety Relief
+    'Focused': 'Focus',
+    'Sleepy': 'Wind Down',
+    'Stressed': 'Anxiety Relief'
+  };
+  
+  const mappedMood = moodMapping[mood] || 'Anxiety Relief';
+  const moodConfig = AI_MUSIC_CONFIG.MOOD_PROMPTS[mappedMood] || AI_MUSIC_CONFIG.MOOD_PROMPTS['Anxiety Relief'];
   const breathingSpeed = getBreathingSpeed(breathingPattern);
   const bpmConfig = AI_MUSIC_CONFIG.BREATHING_BPM_MAP[breathingSpeed];
   

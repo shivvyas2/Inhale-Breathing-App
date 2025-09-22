@@ -1,7 +1,8 @@
 // components/MoodScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { db } from '../supabase';
 import useAuthStore from '../stores/useAuthStore';
@@ -32,7 +33,7 @@ const MoodScreen = ({ navigation }) => {
     { 
       id: 2, 
       label: 'Distracted', 
-      icon: 'trail-sign-outline',
+      icon: 'eye-off',
       pattern: {
         inhale: 4,
         hold1: 4,
@@ -43,7 +44,7 @@ const MoodScreen = ({ navigation }) => {
     { 
       id: 3, 
       label: 'Sleepy', 
-      icon: 'moon',
+      icon: 'weather-night',
       pattern: {
         inhale: 4,
         hold1: 0,
@@ -54,7 +55,7 @@ const MoodScreen = ({ navigation }) => {
   ];
   const activities = [
     { id: 1, label: 'Wind Down', icon: 'leaf' },
-    { id: 2, label: 'Focus', icon: 'infinite' },
+    { id: 2, label: 'Focus', icon: 'target' },
     { id: 3, label: 'Sleep', icon: 'bed' },
   ];
 
@@ -95,7 +96,7 @@ const MoodScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
     <Header showBack navigation={navigation} />
       
       <ScrollView style={styles.scrollView}>
@@ -113,14 +114,14 @@ const MoodScreen = ({ navigation }) => {
                 ]}
                 onPress={() => setSelectedMood(mood)}
               >
-                <Ionicons 
+                <MaterialCommunityIcons 
                   name={mood.icon} 
                   size={24} 
                   color={selectedMood?.id === mood.id ? '#FFFFFF' : '#8B5CF6'} 
                 />
                 {selectedMood?.id === mood.id && (
                   <View style={styles.checkmark}>
-                    <Ionicons name="checkmark" size={16} color="#FFF" />
+                    <MaterialCommunityIcons name="check" size={16} color="#FFF" />
                   </View>
                 )}
                 <Text style={[
@@ -148,14 +149,14 @@ const MoodScreen = ({ navigation }) => {
                     ]}
                     onPress={() => setSelectedActivity(activity)}
                   >
-                    <Ionicons 
+                    <MaterialCommunityIcons 
                       name={activity.icon} 
                       size={24} 
                       color={selectedActivity?.id === activity.id ? '#FFFFFF' : '#8B5CF6'} 
                     />
                     {selectedActivity?.id === activity.id && (
                       <View style={styles.checkmark}>
-                        <Ionicons name="checkmark" size={16} color="#FFF" />
+                        <MaterialCommunityIcons name="check" size={16} color="#FFF" />
                       </View>
                     )}
                     <Text style={[
@@ -182,7 +183,7 @@ const MoodScreen = ({ navigation }) => {
             <Text style={styles.nextButtonText}>
               {loading ? 'Saving...' : 'Next'}
             </Text>
-            {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
+            {!loading && <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" />}
           </TouchableOpacity>
         </View>
       )}

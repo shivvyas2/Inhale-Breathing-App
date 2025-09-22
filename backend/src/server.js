@@ -13,6 +13,7 @@ const sessionRoutes = require('./routes/sessionRoutes');
 const musicRoutes = require('./routes/musicRoutes');
 const streakRoutes = require('./routes/streakRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const aiMusicRoutes = require('./routes/aiMusicRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -273,6 +274,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/music', musicRoutes);
 app.use('/api/streaks', streakRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/ai-music', aiMusicRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

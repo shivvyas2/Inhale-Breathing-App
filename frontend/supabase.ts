@@ -6,12 +6,17 @@ import { createClient, processLock } from '@supabase/supabase-js';
 export interface User {
   id: string;
   username: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   level: number;
   points: number;
   streak: number;
   total_minutes: number;
   last_session_date?: string;
+  current_mood?: string;
+  current_activity?: string;
+  breathing_pattern?: string;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +69,9 @@ export interface UserMusicPreference {
 // Initialize Supabase client
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://mkumjzxgocrfmpgxnpmn.supabase.co';
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rdW1qenhnb2NyZm1wZ3hucG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNDU4MTYsImV4cCI6MjA3MzcyMTgxNn0.sd4PtprQuSh8Ol8v0UcDvQUkxg3zc-pLZ5LcZfHUMDI';
+
+// Gemini API Key
+export const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyACZsbgYVDIRI8dCpswKdQmw9qTfju7wiw';
 
 console.log('=== SUPABASE DEBUG ===');
 console.log('All env vars:', Object.keys(process.env).filter(key => key.includes('SUPABASE')));
@@ -130,6 +138,18 @@ export const db = {
         .single();
       
       if (error) {
+        if (error.code === 'PGRST116') {
+          // User doesn't exist, create a basic profile
+          console.log('User profile not found, creating new profile...');
+          const newUser = await this.createUserProfile(userId, {
+            username: `user_${userId.slice(-8)}`,
+            level: 0,
+            points: 0,
+            streak: 0,
+            total_minutes: 0,
+          });
+          return newUser;
+        }
         console.error('Supabase error:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
         throw error;
@@ -144,26 +164,51 @@ export const db = {
   },
 
   async createUserProfile(userId: string, userData: Partial<User>): Promise<User> {
-    await setUserContext(userId);
-    
-    const { data, error } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        username: userData.username || 'user',
-        email: userData.email,
-        level: userData.level || 0,
-        points: userData.points || 0,
-        streak: userData.streak || 0,
-        total_minutes: userData.total_minutes || 0,
-      })
-      .select()
-      .single();
-    
-    if (error) {
+    try {
+      // Try using the RPC function first
+      const { data, error } = await supabase.rpc('create_user_profile', {
+        user_id_param: userId,
+        username_param: userData.username || 'user',
+        email_param: userData.email,
+        first_name_param: userData.first_name,
+        last_name_param: userData.last_name
+      });
+      
+      if (error) {
+        console.log('RPC function failed, trying direct insert:', error);
+        // Fallback to direct insert
+        await setUserContext(userId);
+        
+        const { data: insertData, error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            username: userData.username || 'user',
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            email: userData.email,
+            level: userData.level || 0,
+            points: userData.points || 0,
+            streak: userData.streak || 0,
+            total_minutes: userData.total_minutes || 0,
+            current_mood: userData.current_mood,
+            current_activity: userData.current_activity,
+            breathing_pattern: userData.breathing_pattern,
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          throw insertError;
+        }
+        return insertData;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error creating user profile:', error);
       throw error;
     }
-    return data;
   },
 
   async updateUserProfile(userId: string, updates: Partial<User>): Promise<User> {

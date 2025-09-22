@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from './Header';
 import { useUser } from '@clerk/clerk-expo';
 import { db } from '../../supabase';
@@ -9,7 +10,7 @@ const SelectMood = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const { user } = useUser();
 
-    const MoodOption = ({ mood, isSelected, onPress }) => (
+    const MoodOption = ({ mood, emoji, description, isSelected, onPress }) => (
         <TouchableOpacity 
             style={styles.moodOptionContainer} 
             onPress={onPress}
@@ -18,9 +19,10 @@ const SelectMood = ({ navigation }) => {
                 styles.moodCircle, 
                 isSelected && styles.selectedMoodCircle
             ]}>
-                {/* Add an icon here later if needed */}
+                <Text style={styles.emoji}>{emoji}</Text>
             </View>
             <Text style={styles.moodLabel}>{mood}</Text>
+            <Text style={styles.moodDescription}>{description}</Text>
         </TouchableOpacity>
     );
 
@@ -53,41 +55,39 @@ const SelectMood = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.container}>
             <Header />
             <Text style={styles.title}>What's your mood?</Text>
             
             <View style={styles.moodOptionsContainer}>
                     <MoodOption 
-                        mood="Anxious"
-                        isSelected={selectedMood === 'Anxious'}
-                        onPress={() => handleMoodSelect('Anxious')}
+                        mood="Anxiety Relief"
+                        emoji="🕯️"
+                        description="Calming music to ease anxiety"
+                        isSelected={selectedMood === 'Anxiety Relief'}
+                        onPress={() => handleMoodSelect('Anxiety Relief')}
                     />
                     <MoodOption 
-                        mood="Distracted"
-                        isSelected={selectedMood === 'Distracted'}
-                        onPress={() => handleMoodSelect('Distracted')}
+                        mood="Meditate"
+                        emoji="🧘"
+                        description="Deep meditation music"
+                        isSelected={selectedMood === 'Meditate'}
+                        onPress={() => handleMoodSelect('Meditate')}
                     />
                     <MoodOption 
-                        mood="Sleepy"
-                        isSelected={selectedMood === 'Sleepy'}
-                        onPress={() => handleMoodSelect('Sleepy')}
+                        mood="Wind Down"
+                        emoji="🌙"
+                        description="Relaxing bedtime music"
+                        isSelected={selectedMood === 'Wind Down'}
+                        onPress={() => handleMoodSelect('Wind Down')}
                     />
                     <MoodOption 
-                        mood="Stressed"
-                        isSelected={selectedMood === 'Stressed'}
-                        onPress={() => handleMoodSelect('Stressed')}
-                    />
-                    <MoodOption 
-                        mood="Calm"
-                        isSelected={selectedMood === 'Calm'}
-                        onPress={() => handleMoodSelect('Calm')}
-                    />
-                    <MoodOption 
-                        mood="Focused"
-                        isSelected={selectedMood === 'Focused'}
-                        onPress={() => handleMoodSelect('Focused')}
+                        mood="Focus"
+                        emoji="🎯"
+                        description="Concentration music"
+                        isSelected={selectedMood === 'Focus'}
+                        onPress={() => handleMoodSelect('Focus')}
                     />
                 </View>
         </View>
@@ -118,22 +118,41 @@ const styles = StyleSheet.create({
     },
     moodOptionContainer: {
         alignItems: 'center',
-        width: '30%',
+        width: '45%',
         marginBottom: 20,
+        padding: 16,
+        backgroundColor: '#f8fafc',
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
     moodCircle: {
         width: 80,
         height: 80,
         borderRadius: 40,
         backgroundColor: '#f0f0f0',
-        marginBottom: 8,
+        marginBottom: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     selectedMoodCircle: {
         backgroundColor: '#8B5CF6',
     },
+    emoji: {
+        fontSize: 32,
+    },
     moodLabel: {
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginBottom: 4,
+        textAlign: 'center',
+    },
+    moodDescription: {
+        fontSize: 12,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 16,
     },
 });
 

@@ -13,7 +13,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSignUp } from '@clerk/clerk-expo';
 import { Menu, Button, Divider, Provider } from 'react-native-paper';
 
@@ -239,7 +239,7 @@ export default function SignUpScreen({ navigation }) {
             style={styles.backButton} 
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color="#6B7280" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#6B7280" />
           </TouchableOpacity>
           
           {/* Progress Indicator */}
@@ -316,7 +316,7 @@ export default function SignUpScreen({ navigation }) {
                           onPress={() => setShowCountryMenu(true)}
                         >
                           <Text style={styles.countryCodeText}>{countryCode}</Text>
-                          <Ionicons name="chevron-down" size={16} color="#6B7280" />
+                          <MaterialCommunityIcons name="chevron-down" size={16} color="#6B7280" />
                         </TouchableOpacity>
                       }
                     >
@@ -355,7 +355,7 @@ export default function SignUpScreen({ navigation }) {
                     placeholderTextColor="#6B7280"
                   />
                   <TouchableOpacity style={styles.passwordVisibilityButton}>
-                    <Ionicons name="eye-outline" size={20} color="#6B7280" />
+                    <MaterialCommunityIcons name="eye" size={20} color="#6B7280" />
                   </TouchableOpacity>
                 </View>
 
@@ -495,7 +495,7 @@ export default function SignUpScreen({ navigation }) {
                     <Text style={styles.keypadText}>0</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.keypadButton} onPress={() => handleKeyPress('backspace')}>
-                    <Ionicons name="backspace-outline" size={26} color="#6B7280" />
+                    <MaterialCommunityIcons name="backspace" size={26} color="#6B7280" />
                   </TouchableOpacity>
                 </View>
               </View>

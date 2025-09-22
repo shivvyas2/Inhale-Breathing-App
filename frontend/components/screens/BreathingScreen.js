@@ -3,15 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   Animated,
   TouchableOpacity,
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 // Removed moti import - using regular View instead
@@ -101,7 +101,9 @@ const BreathingScreen = ({ route, navigation }) => {
       } else {
         setIsCountingDown(false);
         breathingAnimation();
-        if (selectedSound) loadSound();
+        if (selectedSound) {
+          loadSound();
+        }
       }
     }
   }, [countdown, isCountingDown]);
@@ -109,13 +111,17 @@ const BreathingScreen = ({ route, navigation }) => {
   // Load and manage sound
   const loadSound = async () => {
     try {
-      if (!selectedSound) return;
+      if (!selectedSound) {
+        return;
+      }
       
       const audioSource = eval(selectedSound.audio);
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        audioSource,
-        { shouldPlay: true, isLooping: true }
-      );
+      const newSound = new AudioPlayer(audioSource);
+      
+      // Set up the audio player
+      await newSound.setLooping(true);
+      await newSound.play();
+      
       setSound(newSound);
     } catch (error) {
       console.error('Error loading sound:', error);
@@ -157,20 +163,18 @@ const BreathingScreen = ({ route, navigation }) => {
           setCurrentPhase('exhale');
         }
         triggerHaptic(currentPhase);
+      } else if (value > 0.5) {
+        setBreathingState('Breathe In');
+        setCurrentPhase('inhale');
       } else {
-        if (value > 0.5) {
-          setBreathingState('Breathe In');
-          setCurrentPhase('inhale');
-        } else {
-          setBreathingState('Breathe Out');
-          setCurrentPhase('exhale');
-        }
+        setBreathingState('Breathe Out');
+        setCurrentPhase('exhale');
       }
     });
 
     return () => {
       if (sound) {
-        sound.unloadAsync();
+        sound.remove();
       }
       progressAnimation.removeAllListeners();
     };
@@ -183,7 +187,7 @@ const BreathingScreen = ({ route, navigation }) => {
 
   const handleEndSession = () => {
     if (sound) {
-      sound.unloadAsync();
+      sound.remove();
     }
     setShowCongrats(true);
   };
@@ -194,8 +198,13 @@ const BreathingScreen = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.fullScreen}>
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor="#1E1B4B"
+        translucent={false}
+      />
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       
       {/* Animated Background */}
       <View
@@ -213,7 +222,7 @@ const BreathingScreen = ({ route, navigation }) => {
           style={styles.backButton}
         >
           <BlurView intensity={80} style={styles.blurButton}>
-            <Ionicons name="chevron-back" size={24} color="#FFF" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#FFF" />
           </BlurView>
         </TouchableOpacity>
         <BlurView intensity={60} style={styles.moodBadge}>
@@ -240,9 +249,36 @@ const BreathingScreen = ({ route, navigation }) => {
                     <Stop offset="0" stopColor="#8B5CF6" stopOpacity="1" />
                     <Stop offset="1" stopColor="#6366F1" stopOpacity="1" />
                   </LinearGradient>
+                  <LinearGradient id="trackGrad" x1="0" y1="0" x2="1" y2="1">
+                    <Stop offset="0" stopColor="rgba(255,255,255,0.2)" stopOpacity="1" />
+                    <Stop offset="1" stopColor="rgba(255,255,255,0.05)" stopOpacity="1" />
+                  </LinearGradient>
                 </Defs>
                 
-                {/* Background Circle */}
+                {/* Outer Progress Track - Background */}
+                <Circle
+                  cx={CIRCLE_SIZE / 2}
+                  cy={CIRCLE_SIZE / 2}
+                  r={CIRCLE_RADIUS + 15}
+                  stroke="rgba(255,255,255,0.1)"
+                  strokeWidth="6"
+                  fill="none"
+                />
+                
+                {/* Outer Progress Track - Active */}
+                <AnimatedCircle
+                  cx={CIRCLE_SIZE / 2}
+                  cy={CIRCLE_SIZE / 2}
+                  r={CIRCLE_RADIUS + 15}
+                  stroke="url(#trackGrad)"
+                  strokeWidth="6"
+                  strokeDasharray={`${2 * Math.PI * (CIRCLE_RADIUS + 15)} ${2 * Math.PI * (CIRCLE_RADIUS + 15)}`}
+                  strokeDashoffset={progress}
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                
+                {/* Inner Background Circle */}
                 <Circle
                   cx={CIRCLE_SIZE / 2}
                   cy={CIRCLE_SIZE / 2}
@@ -252,7 +288,7 @@ const BreathingScreen = ({ route, navigation }) => {
                   fill="none"
                 />
                 
-                {/* Progress Circle */}
+                {/* Inner Progress Circle */}
                 <AnimatedCircle
                   cx={CIRCLE_SIZE / 2}
                   cy={CIRCLE_SIZE / 2}
@@ -294,11 +330,16 @@ const BreathingScreen = ({ route, navigation }) => {
       {showCongrats && (
   <CongratsBottomSheet navigation={navigation} />
 )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+    backgroundColor: '#1E1B4B',
+  },
   container: {
     flex: 1,
     backgroundColor: '#1E1B4B',

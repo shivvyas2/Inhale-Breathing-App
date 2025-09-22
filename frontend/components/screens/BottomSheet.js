@@ -124,17 +124,19 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
     marginBottom: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
+    gap: 16,
   },
   statItem: {
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 16,
     padding: 20,
-    width: (width - 80) / 2,
+    flex: 1,
+    marginHorizontal: 8,
   },
   statValue: {
     fontSize: 36,

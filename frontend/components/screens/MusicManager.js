@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { Audio } from 'expo-av';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUser } from '@clerk/clerk-expo';
 import { db } from '../../supabase';
 
@@ -106,7 +106,7 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
               style={styles.actionButton}
               onPress={() => playMusic(item)}
             >
-              <Ionicons
+              <MaterialCommunityIcons
                 name={playingId === item.id ? 'pause' : 'play'}
                 size={20}
                 color="#8B5CF6"
@@ -116,7 +116,7 @@ const MusicManager = ({ onMusicSelect, selectedMusicId }) => {
               style={styles.actionButton}
               onPress={() => toggleFavorite(item.id)}
             >
-              <Ionicons
+              <MaterialCommunityIcons
                 name="heart-outline"
                 size={20}
                 color="#8B5CF6"

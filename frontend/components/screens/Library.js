@@ -3,12 +3,12 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  SafeAreaView, 
   TouchableOpacity, 
   Image, 
   ScrollView,
   Dimensions
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { useUser } from '@clerk/clerk-expo';
@@ -73,7 +73,7 @@ const Library = ({ navigation }) => {
           duration: '30:30',
           category: 'Calm',
           image_url: require('../../assets/images/lost.png'),
-          audio_url: require('../../assets/audio/lost.wav'),
+          audio_url: null, // No local audio file
           sessionCount: 0
         },
         {
@@ -82,7 +82,7 @@ const Library = ({ navigation }) => {
           duration: '30:30', 
           category: 'Focus',
           image_url: require('../../assets/images/discover.png'),
-          audio_url: require('../../assets/audio/discover.wav'),
+          audio_url: null, // No local audio file
           sessionCount: 0
         },
         {
@@ -91,7 +91,7 @@ const Library = ({ navigation }) => {
           duration: '30:30', 
           category: 'Nature',
           image_url: require('../../assets/images/journey.png'),
-          audio_url: require('../../assets/audio/journey.wav'),
+          audio_url: null, // No local audio file
           sessionCount: 0
         },
         {
@@ -100,7 +100,7 @@ const Library = ({ navigation }) => {
           duration: '30:30', 
           category: 'Meditate',
           image_url: require('../../assets/images/joyful.png'),
-          audio_url: require('../../assets/audio/joyful.wav'),
+          audio_url: null, // No local audio file
           sessionCount: 0
         },
       ]);
@@ -116,17 +116,10 @@ const Library = ({ navigation }) => {
   });
 
   useEffect(() => {
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
-    });
-
+    // expo-audio handles audio mode automatically
     return () => {
       if (sound) {
-        sound.unloadAsync();
+        sound.remove();
       }
     };
   }, []);
@@ -134,8 +127,8 @@ const Library = ({ navigation }) => {
   const playSound = async (item) => {
     try {
       if (sound) {
-        await sound.stopAsync();
-        await sound.unloadAsync();
+        sound.pause();
+        sound.remove();
       }
 
       if (selectedItem?.id === item.id && isPlaying) {
@@ -143,22 +136,25 @@ const Library = ({ navigation }) => {
         setSound(null);
         setSelectedItem(null);
       } else {
-        // Use audio_url from Supabase data or fallback to local require
+        // Check if audio is available
         const audioSource = item.audio_url || item.audio;
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          audioSource,
-          { shouldPlay: true, isLooping: true }
-        );
+        
+        if (!audioSource) {
+          console.log('No audio available for this item:', item.name);
+          // Just toggle the visual state without playing audio
+          setSelectedItem(item);
+          setIsPlaying(true);
+          return;
+        }
+        
+        const newSound = new AudioPlayer(audioSource);
+        
+        newSound.setLooping(true);
+        newSound.play();
         
         setSound(newSound);
         setSelectedItem(item);
         setIsPlaying(true);
-
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-          }
-        });
       }
     } catch (error) {
       console.error('Error playing sound:', error);
@@ -215,7 +211,7 @@ const Library = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Text style={styles.title}>Library</Text>
 
       <View style={styles.tabsContainer}>

@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSignIn } from '@clerk/clerk-expo';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -70,7 +70,7 @@ export default function LoginScreen({ navigation }) {
             style={styles.backButton} 
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="chevron-back" size={24} color="#6B7280" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#6B7280" />
           </TouchableOpacity>
           
           {/* Welcome Section */}
@@ -104,7 +104,7 @@ export default function LoginScreen({ navigation }) {
                 placeholderTextColor="#6B7280"
               />
               <TouchableOpacity style={styles.passwordVisibilityButton}>
-                <Ionicons name="eye-outline" size={20} color="#6B7280" />
+                <MaterialCommunityIcons name="eye" size={20} color="#6B7280" />
               </TouchableOpacity>
             </View>
             
