@@ -26,81 +26,51 @@ const ChooseSound = ({ navigation }) => {
   const [musicData, setMusicData] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const tabs = ['All', 'Ambience', 'Mood'];
+  const tabs = ['All', 'Calm', 'Peaceful', 'Energizing', 'Uplifting'];
 
   // Load music data from Supabase
   useEffect(() => {
     loadMusicData();
   }, []);
 
-
   const loadMusicData = async () => {
     try {
       setLoading(true);
       
-      // Always use local data for now since we have the audio samples
-      const localMusic = [
-        // Ambience Sounds - Using actual sample audio files
-        { 
-          id: 1, 
-          name: 'Waves', 
-          image_url: require('../../assets/images/album-cover/ocean.png'),
-          audio_url: require('../../assets/samples/Waves.wav'), // Actual waves audio
-          category: 'Ambience',
-          description: 'Gentle ocean waves for relaxation'
-        },
-        { 
-          id: 2, 
-          name: 'Thunder', 
-          image_url: require('../../assets/images/album-cover/thunder.png'),
-          audio_url: require('../../assets/samples/Thunder1.wav'), // Actual thunder audio
-          category: 'Ambience',
-          description: 'Distant thunder and rain'
-        },
-        { 
-          id: 3, 
-          name: 'Chimes', 
-          image_url: require('../../assets/images/album-cover/chime.png'),
-          audio_url: require('../../assets/samples/Chimes.wav'), // Actual chimes audio
-          category: 'Ambience',
-          description: 'Soft wind chimes and bells'
-        },
-        { 
-          id: 4, 
-          name: 'Backyard', 
-          image_url: require('../../assets/images/album-cover/backyard.png'),
-          audio_url: require('../../assets/samples/Backyard.wav'), // Actual backyard audio
-          category: 'Ambience',
-          description: 'Nature sounds from a peaceful backyard'
-        },
-        
-        // Mood Sounds - Each with unique audio for variety
-        { 
-          id: 5, 
-          name: 'Journey', 
-          image_url: require('../../assets/images/journey.png'),
-          audio_url: require('../../assets/audio/journey.wav'), // Perfect match
-          category: 'Mood',
-          description: 'Adventurous and uplifting'
-        },
-        { 
-          id: 6, 
-          name: 'Joyful', 
-          image_url: require('../../assets/images/joyful.png'),
-          audio_url: require('../../assets/audio/joyful.wav'), // Perfect match
-          category: 'Mood',
-          description: 'Happy and energetic'
-        },
-      ];
+      // Load music from Supabase
+      const { data: musicData, error } = await db
+        .from('music')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error loading music from Supabase:', error);
+        throw error;
+      }
+
+      // Transform Supabase data to match expected format
+      const transformedMusic = musicData.map((track, index) => ({
+        id: track.id,
+        name: track.name,
+        image_url: require('../../assets/images/album-cover/ocean.png'), // Default image for now
+        audio_url: `https://mkumjzxgocrfmpgxnpmn.supabase.co/storage/v1/object/public/music/${track.file_path}`,
+        category: track.category,
+        description: `${track.category} music for your breathing session`,
+        duration: track.duration,
+        file_path: track.file_path
+      }));
       
       // Group music by category
       const groupedMusic = {
-        All: localMusic,
-        Ambience: localMusic.filter(item => item.category === 'Ambience'),
-        Mood: localMusic.filter(item => item.category === 'Mood'),
+        All: transformedMusic,
+        Calm: transformedMusic.filter(item => item.category === 'Calm'),
+        Peaceful: transformedMusic.filter(item => item.category === 'Peaceful'),
+        Energizing: transformedMusic.filter(item => item.category === 'Energizing'),
+        Uplifting: transformedMusic.filter(item => item.category === 'Uplifting'),
       };
       
-      console.log('🎵 Loaded music data:', groupedMusic);
+      console.log('🎵 Loaded music data from Supabase:', groupedMusic);
       setMusicData(groupedMusic);
       
     } catch (error) {
@@ -108,8 +78,10 @@ const ChooseSound = ({ navigation }) => {
       // Fallback to empty data
       setMusicData({
         All: [],
-        Ambience: [],
-        Mood: [],
+        Calm: [],
+        Peaceful: [],
+        Energizing: [],
+        Uplifting: [],
       });
     } finally {
       setLoading(false);
@@ -285,11 +257,10 @@ const ChooseSound = ({ navigation }) => {
     
     // Navigate to AI Breathing Screen
     // If a sound is selected, use it; otherwise enable AI music generation
-    navigation.navigate('AIBreathingScreen', {
+    navigation.navigate('BreathingScreen', {
       selectedMood: store.mood.label,
       breathingPattern: store.breathingPattern,
-      selectedSound: simplifiedSound,
-      useAIMusic: !selectedSound // Only use AI music if no sound is selected
+      selectedSound: simplifiedSound
     });
   };
   return (
@@ -331,31 +302,7 @@ const ChooseSound = ({ navigation }) => {
         </View>
       )}
       
-      {/* AI Music Option */}
-      <View style={styles.aiMusicOption}>
-        <TouchableOpacity 
-          style={styles.aiMusicButton}
-          onPress={() => navigation.navigate('InstrumentSelection')}
-        >
-          <View style={styles.aiMusicContent}>
-            <MaterialCommunityIcons name="music" size={24} color="#C4B5FD" />
-            <View style={styles.aiMusicText}>
-              <Text style={styles.aiMusicTitle}>Make your Own</Text>
-              <Text style={styles.aiMusicSubtitle}>
-                Create personalized music with AI
-              </Text>
-            </View>
-            <MaterialCommunityIcons 
-              name="chevron-right" 
-              size={20} 
-              color="#8B5CF6" 
-            />
-          </View>
-        </TouchableOpacity>
-        
-      </View>
       </ScrollView>
-
 
       <View style={styles.tabsContainer}>
         <ScrollView 
@@ -494,43 +441,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-  },
-  aiMusicOption: {
-    marginBottom: 28,
-    paddingHorizontal: 24,
-  },
-  aiMusicButton: {
-    backgroundColor: 'rgba(139, 92, 246, 0.08)',
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(139, 92, 246, 0.2)',
-    padding: 24,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  aiMusicContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  aiMusicText: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  aiMusicTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#7C3AED',
-    marginBottom: 4,
-    letterSpacing: -0.2,
-  },
-  aiMusicSubtitle: {
-    fontSize: 15,
-    color: '#A78BFA',
-    fontWeight: '600',
-    lineHeight: 20,
   },
   tabsContainer: {
     marginBottom: 28,    paddingVertical: 8,
@@ -711,3 +621,4 @@ const styles = StyleSheet.create({
 });
 
 export default ChooseSound;
+

@@ -52,6 +52,17 @@ const MoodScreen = ({ navigation }) => {
         hold2: 2
       }
     },
+    { 
+      id: 4, 
+      label: 'Stressed', 
+      icon: 'alert-circle',
+      pattern: {
+        inhale: 3,
+        hold1: 2,
+        exhale: 5,
+        hold2: 1
+      }
+    },
   ];
   const activities = [
     { id: 1, label: 'Wind Down', icon: 'leaf' },

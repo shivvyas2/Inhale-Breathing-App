@@ -41,7 +41,8 @@ export default function LoginScreen({ navigation }) {
 
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
-        navigation.navigate('TabNavigator');
+        // Navigation will happen automatically when isSignedIn becomes true
+        // The app will switch from AuthStack to AppStack which starts with TabNavigator
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
         Alert.alert('Login Error', 'Could not complete sign in.');

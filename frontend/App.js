@@ -17,9 +17,7 @@ import SignUpScreen from './components/screens/auth/SignUpScreen';
 import Dashboard from './components/screens/Dashboard';
 import TabNavigator from './navigation/TabNavigator';
 import ChooseSound from './components/screens/ChooseSound';
-import InstrumentSelectionScreen from './components/screens/InstrumentSelectionScreen';
 import Library from './components/screens/Library';
-import AIBreathingScreen from './components/screens/AIBreathingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,9 +53,7 @@ const AppStack = () => (
     <Stack.Screen name="Dashboard" component={Dashboard} />
     <Stack.Screen name="MoodScreen" component={MoodScreen} />
     <Stack.Screen name="ChooseSound" component={ChooseSound} />
-    <Stack.Screen name="InstrumentSelection" component={InstrumentSelectionScreen} />
     <Stack.Screen name="BreathingScreen" component={BreathingScreen} />
-    <Stack.Screen name="AIBreathingScreen" component={AIBreathingScreen} />
     <Stack.Screen
       name="Library"
       component={Library}
